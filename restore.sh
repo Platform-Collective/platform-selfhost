@@ -72,12 +72,29 @@ echo "Preparing stack (creating containers, stopping the stack)..."
 $COMPOSE up --no-start
 $COMPOSE stop
 
+source_on() {
+    # $1 = container id, $2 = mount destination
+    docker inspect "$1" --format \
+        "{{range .Mounts}}{{if eq .Destination \"$2\"}}{{if .Name}}{{.Name}}{{else}}{{.Source}}{{end}}{{end}}{{end}}" 2>/dev/null || true
+}
+
+# Resolve the volume backing a mount destination: try the expected service name
+# first, then scan every container in the project (so deployments that name the
+# service differently, e.g. "cockroach" vs "cockroachdb", still resolve).
+# Always exits 0 (prints nothing when not found) so it is safe under `set -e`.
 mount_source() {
-    local cid
-    cid=$($COMPOSE ps -aq "$1" 2>/dev/null | head -1)
-    [ -n "$cid" ] || return 0
-    docker inspect "$cid" --format \
-        "{{range .Mounts}}{{if eq .Destination \"$2\"}}{{if .Name}}{{.Name}}{{else}}{{.Source}}{{end}}{{end}}{{end}}"
+    # $1 = expected service name, $2 = mount destination
+    local cid src
+    cid=$($COMPOSE ps -aq "$1" 2>/dev/null | head -1 || true)
+    if [ -n "$cid" ]; then
+        src=$(source_on "$cid" "$2")
+        [ -n "$src" ] && { echo "$src"; return 0; }
+    fi
+    for cid in $($COMPOSE ps -aq 2>/dev/null || true); do
+        src=$(source_on "$cid" "$2")
+        [ -n "$src" ] && { echo "$src"; return 0; }
+    done
+    return 0
 }
 
 restore_vol() {

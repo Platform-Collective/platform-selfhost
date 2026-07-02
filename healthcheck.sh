@@ -42,19 +42,29 @@ if [ "${#SERVICES[@]}" -eq 0 ]; then
 fi
 
 bad=0
-printf '%-14s %-12s %s\n' "SERVICE" "STATE" "HEALTH"
+printf '%-16s %-22s %s\n' "SERVICE" "STATE" "HEALTH"
 for svc in "${SERVICES[@]}"; do
     cid=$($COMPOSE ps -aq "$svc" 2>/dev/null | head -1)
     if [ -z "$cid" ]; then
-        printf '%-14s %-12s %s\n' "$svc" "no-container" "-"
+        printf '%-16s %-22s %s\n' "$svc" "no-container" "-"
         bad=1
         continue
     fi
     state=$(docker inspect "$cid" --format '{{.State.Status}}' 2>/dev/null)
     health=$(docker inspect "$cid" --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}-{{end}}' 2>/dev/null)
-    printf '%-14s %-12s %s\n' "$svc" "${state:-unknown}" "${health:-'-'}"
-    [ "$state" = "running" ] || bad=1
-    [ "$health" = "unhealthy" ] && bad=1
+    exitcode=$(docker inspect "$cid" --format '{{.State.ExitCode}}' 2>/dev/null)
+    restart=$(docker inspect "$cid" --format '{{.HostConfig.RestartPolicy.Name}}' 2>/dev/null)
+    label="$state"
+    if [ "$state" = "running" ]; then
+        [ "$health" = "unhealthy" ] && bad=1
+    elif [ "$state" = "exited" ] && [ "${exitcode:-1}" = "0" ] && { [ "$restart" = "no" ] || [ -z "$restart" ]; }; then
+        # A one-shot/init container that ran and exited cleanly (e.g. huly-tools,
+        # which has restart: "no"). Expected, not a failure.
+        label="exited (one-shot ok)"
+    else
+        bad=1
+    fi
+    printf '%-16s %-22s %s\n' "$svc" "$label" "${health:--}"
 done
 
 # Optional: front reachability, if we can determine the local HTTP port from config.

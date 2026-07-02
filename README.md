@@ -146,6 +146,10 @@ sudo docker compose up -d
 
 Now, launch your web browser and enjoy Huly! To stop all services, run `docker compose down` from the `huly-selfhost` project directory.
 
+> [!TIP]
+> Prefer **Caddy** (automatic HTTPS) or **Traefik** instead of nginx? See
+> [`guides/reverse-proxy.md`](guides/reverse-proxy.md).
+
 > [!IMPORTANT]
 > Provided configrations include deployments of CockroachDB and Redpanda which might not be production-ready. Please inspect them carefully before using in production. For more information on the recommended deployment configurations, please refer to the [CockroachDB](https://www.cockroachlabs.com/docs/stable/recommended-production-settings) and [Redpanda](https://docs.redpanda.com/24.3/deploy/) documentation.
 

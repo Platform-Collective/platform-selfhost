@@ -1,0 +1,18 @@
+# Caddyfile - front Huly with automatic HTTPS (Let's Encrypt) and WebSocket support.
+#
+# 1. Point your domain's DNS at this host (ports 80 and 443 reachable).
+# 2. In huly.conf / .env set:
+#      HTTP_BIND=127.0.0.1
+#      HTTP_PORT=8087
+#      SECURE=true
+#      HOST_ADDRESS=huly.example.com
+#    so Huly emits https/wss URLs that match what Caddy serves.
+# 3. Replace huly.example.com and 8087 below, then run:  caddy run --config ./Caddyfile
+#
+# Caddy provisions and renews the TLS certificate automatically, and forwards WebSocket
+# upgrades and the X-Forwarded-* headers with no extra configuration (the Huly transactor
+# needs WebSockets).
+
+huly.example.com {
+	reverse_proxy 127.0.0.1:8087
+}

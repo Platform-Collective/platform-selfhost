@@ -12,7 +12,7 @@
 # are rebuilt automatically and are not required to restore. Use --full to include
 # them.
 #
-# Usage: ./backup.sh [--output=DIR] [--keep=N] [--full] [--help]
+# Usage: ./backup.sh [--output=DIR] [--keep=N] [--full] [--offsite] [--help]
 
 set -euo pipefail
 
@@ -21,18 +21,21 @@ cd "$(dirname "$0")"
 OUTPUT_DIR="./backups"
 KEEP=0
 FULL=false
+OFFSITE=false
 
 for arg in "$@"; do
     case $arg in
         --output=*) OUTPUT_DIR="${arg#*=}" ;;
         --keep=*)   KEEP="${arg#*=}" ;;
         --full)     FULL=true ;;
+        --offsite)  OFFSITE=true ;;
         --help)
             echo "Usage: $0 [OPTIONS]"
             echo "Options:"
             echo "  --output=DIR  Directory to write backups into (default: ./backups)"
             echo "  --keep=N      Keep only the N most recent backups (default: keep all)"
             echo "  --full        Also back up the search index (elastic) and event log (redpanda)"
+            echo "  --offsite     After the local backup, upload it to S3-compatible storage (see backup-offsite.env.example)"
             echo "  --help        Show this help message"
             exit 0
             ;;
@@ -162,6 +165,33 @@ if [ "$KEEP" -gt 0 ]; then
             echo "  removing ${existing[i]}"
             rm -rf "${existing[i]}"
         done
+    fi
+fi
+
+# Optional: push the completed backup to S3-compatible offsite storage via rclone.
+# A backup that lives only on the same host is not disaster recovery. Configure via
+# environment or a gitignored backup-offsite.env (see backup-offsite.env.example).
+if [ "$OFFSITE" = true ]; then
+    # shellcheck source=/dev/null
+    if [ -f ./backup-offsite.env ]; then . ./backup-offsite.env; fi
+    : "${BACKUP_S3_BUCKET:?--offsite needs BACKUP_S3_BUCKET (set env or create backup-offsite.env)}"
+    : "${BACKUP_S3_ACCESS_KEY:?--offsite needs BACKUP_S3_ACCESS_KEY}"
+    : "${BACKUP_S3_SECRET_KEY:?--offsite needs BACKUP_S3_SECRET_KEY}"
+    : "${BACKUP_S3_ENDPOINT:?--offsite needs BACKUP_S3_ENDPOINT}"
+    PREFIX="${BACKUP_S3_PATH_PREFIX:-huly}"
+    DEST_NAME=$(basename "$DEST")
+    echo "Uploading backup offsite to s3://${BACKUP_S3_BUCKET}/${PREFIX}/${DEST_NAME}/ ..."
+    if docker run --rm -v "$DEST_ABS":/data:ro \
+        -e RCLONE_S3_PROVIDER="${BACKUP_S3_PROVIDER:-Other}" \
+        -e RCLONE_S3_ENV_AUTH=false \
+        -e RCLONE_S3_ACCESS_KEY_ID="$BACKUP_S3_ACCESS_KEY" \
+        -e RCLONE_S3_SECRET_ACCESS_KEY="$BACKUP_S3_SECRET_KEY" \
+        -e RCLONE_S3_ENDPOINT="$BACKUP_S3_ENDPOINT" \
+        -e RCLONE_S3_REGION="${BACKUP_S3_REGION:-us-east-1}" \
+        rclone/rclone copy /data ":s3:${BACKUP_S3_BUCKET}/${PREFIX}/${DEST_NAME}/" -v; then
+        echo -e "\033[1;32mOffsite upload complete.\033[0m Set a bucket lifecycle policy for offsite retention."
+    else
+        echo -e "\033[31mWARNING: offsite upload failed - the local backup at $DEST is intact.\033[0m"
     fi
 fi
 

@@ -53,6 +53,21 @@ Copy that directory off the server (to object storage or another host) for real
 disaster recovery - a backup that lives only on the same disk as the deployment is
 not a backup.
 
+## Offsite copies (disaster recovery)
+
+A backup that lives only on the same host as the deployment is not disaster recovery: if
+the server is lost, so are the backups. Pass `--offsite` to also upload each backup to
+S3-compatible storage (Backblaze B2, DigitalOcean Spaces, AWS S3, Wasabi, MinIO, etc.):
+
+```bash
+cp backup-offsite.env.example backup-offsite.env   # then fill in your bucket + keys
+./backup.sh --offsite
+```
+
+`backup-offsite.env` is gitignored (it holds your keys). The upload runs `rclone` in a
+throwaway container, so there is nothing extra to install. For retention on the remote, set
+a bucket lifecycle policy (expire objects after N days) rather than pruning by hand.
+
 ## Restore
 
 > [!WARNING]

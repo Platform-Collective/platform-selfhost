@@ -69,7 +69,9 @@ done
 
 # Optional: front reachability, if we can determine the local HTTP port from config.
 PORT=$(grep -hE '^HTTP_PORT=' .env huly.conf huly_v7.conf 2>/dev/null | tail -1 | cut -d= -f2 | tr -d '"' | tr -d '[:space:]')
-if [ -n "${PORT:-}" ]; then
+if [ -n "${PORT:-}" ] && ! command -v curl >/dev/null 2>&1; then
+    echo "front: skipped (curl not installed)"
+elif [ -n "${PORT:-}" ]; then
     code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 8 "http://localhost:${PORT}" 2>/dev/null || true)
     case "$code" in
         200|301|302) echo "front: http://localhost:${PORT} -> HTTP $code (reachable)" ;;

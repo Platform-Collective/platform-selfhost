@@ -13,7 +13,7 @@ Kubernetes, the Helm chart ships scheduled backups under
 |---|---|---|
 | Database | CockroachDB volume (`cr_data`) | Yes |
 | Files / attachments | MinIO volume (`files`) | Yes |
-| Config and secrets | `.env`, `huly*.conf`, `nginx.conf`, `.huly.secret`, `.cr.secret`, `.rp.secret`, `traefik/` | Yes |
+| Config and secrets | `.env`, `huly*.conf`, `nginx.conf`, `.huly.nginx`, `.huly.secret`, `.cr.secret`, `.rp.secret`, `traefik/` | Yes |
 | Legacy database | MongoDB volume (`mongodb`), if present | Yes, when detected |
 | Search index | Elasticsearch volume (`elastic`) | No - rebuilt automatically |
 | Event log | Redpanda volume (`redpanda`) | No - transient |
@@ -21,6 +21,10 @@ Kubernetes, the Helm chart ships scheduled backups under
 The search index and event log are intentionally skipped: they are regenerated from
 the database and file store, so excluding them keeps backups small and restores fast.
 Use `--full` if you want them included anyway.
+
+`.huly.nginx` is included because it is the file mounted into the nginx container, and
+the README has you edit it by hand to enable optional routes (love, print, `_pulse`,
+aibot, github, telegram). Regenerating it with `nginx.sh` would drop those edits.
 
 ## Backup
 

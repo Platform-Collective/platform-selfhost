@@ -137,7 +137,7 @@ fi
 restart_stack
 
 echo "Copying config and secret files..."
-for f in .env huly.conf huly_v7.conf nginx.conf .huly.secret .cr.secret .rp.secret; do
+for f in .env huly.conf huly_v7.conf nginx.conf .huly.nginx .huly.secret .cr.secret .rp.secret; do
     [ -f "$f" ] && cp -p "$f" "$DEST/config/"
 done
 [ -d traefik ] && cp -rp traefik "$DEST/config/"

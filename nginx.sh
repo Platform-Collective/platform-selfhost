@@ -68,9 +68,15 @@ fi
 
 read -p "Do you want to run 'nginx -s reload' now to load your updated Huly config? (Y/n): " RUN_NGINX
 case "${RUN_NGINX:-Y}" in  
-    [Yy]* )  
+    [Yy]* )
         echo -e "\033[1;32mRunning 'nginx -s reload' now...\033[0m"
-        sudo nginx -s reload
+        if [ "$(id -u)" -eq 0 ]; then
+            nginx -s reload
+        elif command -v sudo >/dev/null 2>&1; then
+            sudo nginx -s reload
+        else
+            echo "Not running as root and 'sudo' is not available; run 'nginx -s reload' yourself as root."
+        fi
         ;;
     [Nn]* )
         echo "You can run 'nginx -s reload' later to load your updated Huly config."

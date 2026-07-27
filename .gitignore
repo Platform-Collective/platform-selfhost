@@ -8,3 +8,5 @@ huly_v7.conf
 .cr.secret
 .rp.secret
 .idea
+backup-offsite.env
+backups/

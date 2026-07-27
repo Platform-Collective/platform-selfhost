@@ -56,6 +56,20 @@ To update an existing self-hosted deployment to a new Huly version:
    docker compose up -d
    ```
 
+## Backups
+
+Use the `backup.sh` and `restore.sh` helpers to back up and restore a Docker Compose
+deployment (database, file store, and config). See
+[`guides/backup-restore.md`](guides/backup-restore.md) for details.
+
+> [!IMPORTANT]
+> Take a backup **before** any version upgrade.
+
+```bash
+./backup.sh                 # snapshot to ./backups/huly-backup-<timestamp>/
+./restore.sh backups/huly-backup-<timestamp>
+```
+
 ## Disable default content in new workspaces
 
 By default, Huly can initialize new workspaces with predefined content. To disable that behavior, set `INIT_REPO_DIR` in the `workspace` service to a non-existing path:

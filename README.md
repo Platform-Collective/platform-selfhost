@@ -25,6 +25,10 @@ The Huly platform source code is available on GitHub: **[hcengineering/platform]
 
 ## Updating to a new Huly version
 
+> [!TIP]
+> For a step-by-step safe upgrade (backup, verification, and rollback), see
+> [`guides/upgrading.md`](guides/upgrading.md).
+
 Before updating, **always review `MIGRATION.md`** in this repository:
 
 - **Open `MIGRATION.md`** and find the section for your target version (for example `v0.7.423`).

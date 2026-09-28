@@ -10,3 +10,11 @@ huly_v7.conf
 .idea
 backup-offsite.env
 backups/
+
+# smoke tests
+tests/.smoke-state
+tests/.smoke-ui-state
+tests/ui/node_modules/
+tests/ui/playwright-report/
+tests/ui/test-results/
+logs/

@@ -1,6 +1,6 @@
-# Huly Helm Chart
+# Platform Helm Chart
 
-Deploy [Huly](https://huly.io) — an open-source project management platform — on Kubernetes with a single command.
+Deploy the [Platform Collective platform](https://github.com/Platform-Collective/platform) on Kubernetes with a single command.
 
 ## Prerequisites
 
@@ -58,7 +58,7 @@ helm install huly ./helm/huly \
 
 ## External S3 Storage
 
-By default, the chart deploys a built-in MinIO instance. To use external S3-compatible storage instead:
+By default, the chart deploys a built-in [Silo](https://github.com/pgsty/silo) instance (a MinIO-compatible fork; the upstream MinIO community edition is no longer maintained). To use external S3-compatible storage instead:
 
 ```bash
 helm install huly ./helm/huly \
@@ -106,7 +106,7 @@ helm install huly ./helm/huly \
 
 ## GitHub Integration
 
-Bidirectional sync of issues, PRs, and comments between Huly and GitHub. Requires a [GitHub App](https://docs.github.com/en/apps/creating-github-apps).
+Bidirectional sync of issues, PRs, and comments between the platform and GitHub. Requires a [GitHub App](https://docs.github.com/en/apps/creating-github-apps).
 
 ```bash
 helm install huly ./helm/huly \
@@ -215,7 +215,7 @@ kubectl logs deployment/<service> -n <namespace> --tail=20
 
 | Key | Description | Default |
 |-----|-------------|---------|
-| `domain` | Your Huly domain (e.g. `huly.mysite.com`) | `huly.example` |
+| `domain` | Your platform domain (e.g. `huly.mysite.com`) | `huly.example` |
 
 ### Authentication
 
@@ -268,7 +268,7 @@ All secrets are auto-generated if left empty. They persist across `helm upgrade`
 
 | Key | Description | Default |
 |-----|-------------|---------|
-| `appSettings.title` | Browser title | `Huly Self Host` |
+| `appSettings.title` | Browser title | `Platform Self Host` |
 | `appSettings.defaultLanguage` | Default UI language | `en` |
 | `appSettings.lastNameFirst` | Display last name first | `true` |
 | `appSettings.modelEnabled` | Enabled platform models | `*` |
@@ -296,8 +296,8 @@ Each infra service can be disabled to use an external instance. When disabled, p
 | `elastic.storage` | Data PVC size | `10Gi` |
 | `elastic.storageClassName` | PVC storage class | `""` |
 | `elastic.javaOpts` | JVM heap options | `-Xms1024m -Xmx1024m` |
-| `minio.enabled` | Deploy built-in MinIO | `true` |
-| `minio.image` | MinIO image | `minio/minio` |
+| `minio.enabled` | Deploy built-in Silo (MinIO-compatible) storage | `true` |
+| `minio.image` | Object storage image ([Silo](https://github.com/pgsty/silo), MinIO fork) | `pgsty/silo:RELEASE.2026-09-16T00-00-00Z` |
 | `minio.storage` | Data PVC size | `50Gi` |
 | `minio.storageClassName` | PVC storage class | `""` |
 
@@ -314,7 +314,7 @@ All app services share these overridable keys: `<svc>.replicas`, `<svc>.resource
 
 | Key | Description | Default |
 |-----|-------------|---------|
-| `hulyVersion` | Image tag for all Huly services | `v0.7.423` |
+| `hulyVersion` | Image tag for all platform services | `s0.7.426` |
 | `kvs.enabled` | Deploy KVS (key-value store) service | `true` |
 
 ### GitHub Integration
@@ -336,7 +336,7 @@ All app services share these overridable keys: `<svc>.replicas`, `<svc>.resource
 |-----|-------------|---------|
 | `aibot.enabled` | Deploy AI bot service | `false` |
 | `aibot.replicas` | Replica count | `1` |
-| `aibot.firstName` | Bot display first name | `Huly` |
+| `aibot.firstName` | Bot display first name | `Platform` |
 | `aibot.lastName` | Bot display last name | `AI` |
 | `secrets.openaiApiKey` | OpenAI API key (required when enabled) | `""` |
 | `secrets.openaiBaseUrl` | OpenAI API base URL override | `""` |
@@ -358,7 +358,7 @@ The chart deploys 13+ services (optional services marked with *):
 | **cockroach** | 26257 | SQL database (CockroachDB) |
 | **redpanda** | 9092 | Message queue (Kafka-compatible) |
 | **elastic** | 9200 | Full-text search (Elasticsearch) |
-| **minio** | 9000 | Object storage (S3-compatible) |
+| **minio** | 9000 | Object storage (Silo, S3-compatible) |
 | **front** | 8080 | Web UI |
 | **account** | 3000 | Authentication & user management |
 | **transactor** | 3333 | Core transaction engine |
@@ -387,7 +387,7 @@ All services are exposed under a single domain via path-based NGINX ingress rout
 On merge to `main`, the GitHub Actions workflow packages and pushes the chart to GHCR:
 
 ```bash
-helm install huly oci://ghcr.io/hcengineering/charts/huly \
+helm install huly oci://ghcr.io/platform-collective/charts/huly \
   --version 0.1.0 \
   --set domain=huly.mysite.com
 ```

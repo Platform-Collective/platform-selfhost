@@ -1,10 +1,10 @@
-# Huly Migration
+# Platform Migration
 
-This document describes the changes required to update Huly from one version to another. Most of updates require updating Docker containers versions.
+This document describes the changes required to update the platform from one version to another. Most of updates require updating Docker containers versions.
 Though, some updates may require updating other configuration options. In this case, you should review the updated configuration options and update them accordingly.
 
 > [!TIP]
-> If you use the desktop app and want it to upgrade from Huly distributions keep DESKTOP_CHANNEL in sync with the version of the containers without "v" prefix.
+> If you use the desktop app, keep DESKTOP_CHANNEL in sync with the version of the containers without the "v"/"s" prefix.
 
 ## v0.7
 
@@ -12,6 +12,14 @@ WARNING: if you are migrating from v6 see [v0.7.204](#v07204) for details.
 
 > [!CAUTION]
 > Do not upgrade directly from v6 to v7. Direct upgrades will lock your deployment with MongoDB-specific data, making the future migration significantly more complex. Follow the migration instructions below instead.
+
+### Object storage: MinIO → Silo
+
+The upstream MinIO community edition is no longer maintained, so the `minio` service now runs [`pgsty/silo`](https://github.com/pgsty/silo) — a community-maintained MinIO fork that keeps the same S3 API, on-disk format and `MINIO_*` variables.
+
+No data migration is required: the service keeps the `minio` name, port `9000` and the same `files` volume, and `STORAGE_CONFIG` stays unchanged. Run `docker compose pull && docker compose up -d` to switch.
+
+If you use a custom `compose.yml`, also replace the `minio` healthcheck `mc ready local` with `silo healthcheck ready` — the Silo image ships `mcli` instead of `mc`.
 
 ### v0.7.423
 
@@ -82,7 +90,7 @@ Migration to v7 involves backing up your v6 deployment data and restoring it to 
 
 Migration Steps (command examples shown for Docker on macOS):
 
-1. Make a full backup of your v6 deployment. Run the following command on **v6** tag of the `huly-selfhost` repository adjusting the variables to the actual values of your deployment in case they differ from the ones in the sample deployment.
+1. Make a full backup of your v6 deployment. Run the following command on the **v6** tag of the upstream [`hcengineering/huly-selfhost`](https://github.com/hcengineering/huly-selfhost) repository adjusting the variables to the actual values of your deployment in case they differ from the ones in the sample deployment.
 
 ```
   source .env && docker run \
@@ -101,11 +109,13 @@ Migration Steps (command examples shown for Docker on macOS):
 ```
 
 > [!NOTE]
+> The v6 backup uses the upstream `hardcoreeng/tool:v0.6.504` image, since v6 deployments were built from upstream Huly images.
+>
 > This command will write the necessary backup files to the mounted volume. Make sure this volume will be available to your new v7 deployment to restore the data from it. Consider using an absolute path instead of "./backup-all".
 
-2. Set up a fresh v7 deployment by following the standard [deployment instructions](https://github.com/hcengineering/huly-selfhost/blob/main/README.md).
+2. Set up a fresh v7 deployment by following the standard [deployment instructions](README.md).
 
-3. Restore the data from the backup created in step 1. Make sure the deployment is new and doesn't contain any data as it might result in conflicts during the restore procedure. Run the following command on the main branch of the `huly-selfhost` repository adjusting variables to the actual values of your deployment in case they differ from the ones in the sample deployment. Make sure that the mounted volume is referencing the same path as was used in the backup command.
+3. Restore the data from the backup created in step 1. Make sure the deployment is new and doesn't contain any data as it might result in conflicts during the restore procedure. Run the following command on the main branch of this `platform-selfhost` repository adjusting variables to the actual values of your deployment in case they differ from the ones in the sample deployment. Make sure that the mounted volume is referencing the same path as was used in the backup command.
 
 ```
   source .env && docker run \
@@ -118,7 +128,7 @@ Migration Steps (command examples shown for Docker on macOS):
     -e DB_URL="${CR_DB_URL}" \
     -e QUEUE_CONFIG="redpanda:9092" \
     -v ./backup-all:/backup \
-    -it hardcoreeng/tool:s0.7.251 \
+    -it platformcollective/tool:${HULY_VERSION} \
     -- bundle.js restore-from-v6-all /backup
 ```
 
@@ -230,7 +240,7 @@ Configuration:
 
 ```yaml
   fulltext:
-    image: hardcoreeng/fulltext:${HULY_VERSION}
+    image: platformcollective/fulltext:${HULY_VERSION}
     ports:
       - 4700:4700
     environment:
@@ -267,7 +277,7 @@ Configuration:
 
 ```yaml
   stats:
-    image: hardcoreeng/stats:${HULY_VERSION}
+    image: platformcollective/stats:${HULY_VERSION}
     ports:
       - 4900:4900
     environment:
@@ -276,7 +286,7 @@ Configuration:
     restart: unless-stopped
 ```
 
-Other Huly services have been updated to use the new statistics service:
+Other platform services have been updated to use the new statistics service:
 
 ```yaml
   ...

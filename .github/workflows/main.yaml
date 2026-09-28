@@ -58,7 +58,7 @@ jobs:
               --selector=app.kubernetes.io/component=controller \
               --timeout=90s
 
-        - name: "Huly deploy"
+        - name: "Platform deploy"
           working-directory: ${{ github.workspace }}/src/github.com/${{ github.repository }}/kube
           run: |
             echo 127.0.0.1 huly.example | sudo tee -a /etc/hosts

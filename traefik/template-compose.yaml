@@ -61,7 +61,7 @@ services:
       - internal-services
 
   minio:
-    image: minio/minio
+    image: pgsty/silo:RELEASE.2026-09-16T00-00-00Z
     restart: unless-stopped
     command: server /data --address ":9000" --console-address ":9001"
     volumes:
@@ -92,7 +92,7 @@ services:
       - internal-services
 
   rekoni:
-    image: hardcoreeng/rekoni-service:${HULY_VERSION}
+    image: platformcollective/rekoni-service:${HULY_VERSION}
     restart: unless-stopped
     environment:
       <<: *common-env
@@ -114,7 +114,7 @@ services:
       - "traefik.http.routers.rekoni.tls.certresolver=myresolver"
 
   transactor:
-    image: hardcoreeng/transactor:${HULY_VERSION}
+    image: platformcollective/transactor:${HULY_VERSION}
     restart: unless-stopped
     environment:
       <<: *common-env
@@ -152,7 +152,7 @@ services:
       - "traefik.http.middlewares.strip-transactor-prefix.stripprefix.prefixes=/transactor"
 
   collaborator:
-    image: hardcoreeng/collaborator:${HULY_VERSION}
+    image: platformcollective/collaborator:${HULY_VERSION}
     restart: unless-stopped
     environment:
       <<: *common-env
@@ -185,7 +185,7 @@ services:
       - "traefik.http.middlewares.strip-collaborator-prefix.stripprefix.prefixes=/collaborator"
 
   account:
-    image: hardcoreeng/account:${HULY_VERSION}
+    image: platformcollective/account:${HULY_VERSION}
     restart: unless-stopped
     environment:
       <<: *common-env
@@ -208,7 +208,7 @@ services:
       - "traefik.http.routers.account.tls.certresolver=myresolver"
 
   workspace:
-    image: hardcoreeng/workspace:${HULY_VERSION}
+    image: platformcollective/workspace:${HULY_VERSION}
     restart: unless-stopped
     environment:
       <<: *common-env
@@ -218,7 +218,7 @@ services:
       - internal-services
 
   front:
-    image: hardcoreeng/front:${HULY_VERSION}
+    image: platformcollective/front:${HULY_VERSION}
     restart: unless-stopped
     environment:
       <<: *common-env
@@ -232,7 +232,7 @@ services:
       UPLOAD_URL: /files
       ELASTIC_URL: http://elastic:9200
       COLLABORATOR_URL: wss://${SERVER_ADDRESS}/ws/collaborator
-      TITLE: Huly Self Host
+      TITLE: Platform Self Host
       DEFAULT_LANGUAGE: en
       LAST_NAME_FIRST: true
       DESKTOP_UPDATES_CHANNEL: selfhost
@@ -248,7 +248,7 @@ services:
       - "traefik.http.routers.front.tls.certresolver=myresolver"
 
   fulltext:
-    image: hardcoreeng/fulltext:${HULY_VERSION}
+    image: platformcollective/fulltext:${HULY_VERSION}
     restart: unless-stopped
     environment:
       <<: *common-env
@@ -259,7 +259,7 @@ services:
       - internal-services
 
   stats:
-    image: hardcoreeng/stats:${HULY_VERSION}
+    image: platformcollective/stats:${HULY_VERSION}
     restart: unless-stopped
     environment:
       <<: *common-env

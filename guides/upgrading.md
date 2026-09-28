@@ -2,7 +2,7 @@
 
 A safe, repeatable procedure for upgrading a Docker Compose deployment to a new
 version, including a backup and a rollback path. This expands on the summary in the
-[README](../README.md#updating-to-a-new-huly-version).
+[README](../README.md#updating-to-a-new-platform-version).
 
 > [!CAUTION]
 > Do **not** upgrade directly from a 0.6.x version to 0.7.x. Follow the dedicated
@@ -42,8 +42,8 @@ git pull
 
 Edit `.env` (or your config file) and update:
 
-- `HULY_VERSION` to the target tag, for example `v0.7.423`.
-- `DESKTOP_CHANNEL` to the same value without the leading `v` (for example `0.7.423`),
+- `HULY_VERSION` to the target tag, for example `s0.7.426`.
+- `DESKTOP_CHANNEL` to the same value without the leading `v`/`s` (for example `0.7.426`),
   if you use the desktop app.
 
 Apply any additional changes called for in `MIGRATION.md`.

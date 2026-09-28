@@ -64,14 +64,14 @@ spec:
             - name: TELEGRAM_URL
               value: http://telegram:8086
             - name: TITLE
-              value: Huly Self Hosted
+              value: Platform Self Hosted
             - name: UPLOAD_URL
               value: /files
             - name: STATS_URL
               value: http://stats
             - name: DESKTOP_UPDATES_CHANNEL
               value: selfhost
-          image: hardcoreeng/front:v0.7.423
+          image: platformcollective/front:s0.7.426
           name: front
           ports:
             - containerPort: 8080

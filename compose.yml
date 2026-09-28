@@ -53,12 +53,12 @@ services:
       - huly_net
 
   minio:
-    image: "minio/minio"
+    image: "pgsty/silo:RELEASE.2026-09-16T00-00-00Z"
     command: server /data --address ":9000" --console-address ":9001"
     volumes:
       - ${VOLUME_FILES_PATH:-files}:/data
     healthcheck:
-      test: ['CMD', 'mc', 'ready', 'local']
+      test: ['CMD', 'silo', 'healthcheck', 'ready']
       interval: 5s
       retries: 10
     restart: unless-stopped
@@ -105,7 +105,7 @@ services:
   #   # Required by HulyPulse (push notifications / real-time updates)
 
   # hulypulse:
-  #   image: hardcoreeng/service_hulypulse:${HULY_PULSE_VERSION:-0.1.29}
+  #   image: platformcollective/hulypulse:${HULY_PULSE_VERSION:-${HULY_VERSION}}
   #   ports:
   #     - 8099:8099
   #   environment:
@@ -127,7 +127,7 @@ services:
   #     - huly_net
 
   rekoni:
-    image: hardcoreeng/rekoni-service:${HULY_VERSION}
+    image: platformcollective/rekoni-service:${HULY_VERSION}
     environment:
       - SECRET=${SECRET}
     deploy:
@@ -139,7 +139,7 @@ services:
       - huly_net
 
   print:
-    image: hardcoreeng/print:${HULY_VERSION}
+    image: platformcollective/print:${HULY_VERSION}
     ports:
       - 4005:4005
     environment:
@@ -153,7 +153,7 @@ services:
       - huly_net
 
   transactor:
-    image: hardcoreeng/transactor:${HULY_VERSION}
+    image: platformcollective/transactor:${HULY_VERSION}
     environment:
       - SERVER_PORT=3333
       - SERVER_SECRET=${SECRET}
@@ -170,7 +170,7 @@ services:
       - huly_net
 
   collaborator:
-    image: hardcoreeng/collaborator:${HULY_VERSION}
+    image: platformcollective/collaborator:${HULY_VERSION}
     environment:
       - COLLABORATOR_PORT=3078
       - SECRET=${SECRET}
@@ -182,7 +182,7 @@ services:
       - huly_net
 
   account:
-    image: hardcoreeng/account:${HULY_VERSION}
+    image: platformcollective/account:${HULY_VERSION}
     environment:
       - SERVER_PORT=3000
       - SERVER_SECRET=${SECRET}
@@ -200,7 +200,7 @@ services:
       - huly_net
 
   workspace:
-    image: hardcoreeng/workspace:${HULY_VERSION}
+    image: platformcollective/workspace:${HULY_VERSION}
     environment:
       - SERVER_SECRET=${SECRET}
       - DB_URL=${CR_DB_URL}
@@ -217,7 +217,7 @@ services:
       - huly_net
 
   front:
-    image: hardcoreeng/front:${HULY_VERSION}
+    image: platformcollective/front:${HULY_VERSION}
     environment:
       - SERVER_PORT=8080
       - SERVER_SECRET=${SECRET}
@@ -234,7 +234,7 @@ services:
       - COLLABORATOR_URL=ws${SECURE:+s}://${HOST_ADDRESS}/_collaborator
       - PRINT_URL=http${SECURE:+s}://${HOST_ADDRESS}/_print
       - STORAGE_CONFIG=minio|minio?accessKey=minioadmin&secretKey=minioadmin
-      - TITLE=${TITLE:-Huly Self Host}
+      - TITLE=${TITLE:-Platform Self Host}
       - DEFAULT_LANGUAGE=${DEFAULT_LANGUAGE:-en}
       - LAST_NAME_FIRST=${LAST_NAME_FIRST:-true}
       - DESKTOP_UPDATES_CHANNEL=${DESKTOP_CHANNEL}
@@ -244,7 +244,7 @@ services:
       - huly_net
 
   fulltext:
-    image: hardcoreeng/fulltext:${HULY_VERSION}
+    image: platformcollective/fulltext:${HULY_VERSION}
     environment:
       - SERVER_SECRET=${SECRET}
       - DB_URL=${CR_DB_URL}
@@ -260,7 +260,7 @@ services:
       - huly_net
 
   stats:
-    image: hardcoreeng/stats:${HULY_VERSION}
+    image: platformcollective/stats:${HULY_VERSION}
     environment:
       - PORT=4900
       - SERVER_SECRET=${SECRET}
@@ -269,7 +269,7 @@ services:
       - huly_net
 
   kvs:
-    image: hardcoreeng/hulykvs:${HULY_VERSION}
+    image: platformcollective/hulykvs:${HULY_VERSION}
     depends_on:
       cockroach:
         condition: service_started

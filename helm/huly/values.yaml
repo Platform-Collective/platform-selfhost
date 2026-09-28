@@ -8,14 +8,14 @@ nameOverride: ""
 fullnameOverride: ""
 
 # ──────────────────────────────────────────────────────────────
-# Global image tag for all Huly services
+# Global image tag for all platform services
 # ──────────────────────────────────────────────────────────────
-hulyVersion: v0.7.423
+hulyVersion: s0.7.426
 
-# Docker registry prefix for Huly service images.
-# Default "hardcoreeng" pulls from Docker Hub (hardcoreeng/front, etc.).
+# Docker registry prefix for platform service images.
+# Default "platformcollective" pulls from Docker Hub (platformcollective/front, etc.).
 # Override to use a private registry, e.g. europe-west3-docker.pkg.dev/kendall-ledo/docker/huly
-hulyRegistry: hardcoreeng
+hulyRegistry: platformcollective
 
 # ──────────────────────────────────────────────────────────────
 # Secrets — leave empty to auto-generate (persists across upgrades)
@@ -65,11 +65,11 @@ auth:
   disableSignup: false
 
 # ──────────────────────────────────────────────────────────────
-# Storage backend — built-in MinIO or external S3
+# Storage backend — built-in MinIO-compatible storage (Silo) or external S3
 # ──────────────────────────────────────────────────────────────
 storage:
-  # "minio" = use built-in MinIO (default)
-  # "s3"    = use external S3-compatible storage (disables built-in MinIO)
+  # "minio" = use built-in Silo (MinIO-compatible, default)
+  # "s3"    = use external S3-compatible storage (disables built-in Silo)
   type: minio
   s3:
     endpoint: ""       # e.g. https://s3.amazonaws.com
@@ -99,7 +99,7 @@ ingress:
 appSettings:
   modelEnabled: "*"
   lastNameFirst: "true"
-  title: "Huly Self Host"
+  title: "Platform Self Host"
   defaultLanguage: "en"
   # Comma-separated list of admin email addresses
   adminEmails: ""
@@ -153,7 +153,8 @@ elastic:
 minio:
   # Automatically disabled when storage.type=s3
   enabled: true
-  image: minio/minio
+  # Silo (pgsty/silo) — community-maintained MinIO fork, drop-in compatible
+  image: pgsty/silo:RELEASE.2026-09-16T00-00-00Z
   storage: 50Gi
   storageClassName: ""
   resources: {}
@@ -252,7 +253,7 @@ aibot:
   # AI bot service — requires OpenAI API key
   enabled: false
   replicas: 1
-  firstName: "Huly"
+  firstName: "Platform"
   lastName: "AI"
   # Override default models (leave empty for upstream defaults)
   openaiModel: ""

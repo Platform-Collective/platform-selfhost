@@ -107,7 +107,7 @@ else
             prompt_type="default"
             prompt_value="No"
         fi
-        read -p "Will you serve Huly over SSL? (y/n) [${prompt_type}: ${prompt_value}]: " input
+        read -p "Will you serve the platform over SSL? (y/n) [${prompt_type}: ${prompt_value}]: " input
         case "${input}" in
             [Yy]* )
                 _SECURE="true"; break;;
@@ -216,7 +216,7 @@ export HOST_ADDRESS=$_HOST_ADDRESS
 export SECURE=$_SECURE
 export HTTP_PORT=$_HTTP_PORT
 export HTTP_BIND=$HTTP_BIND
-export TITLE=${TITLE:-Huly}
+export TITLE=${TITLE:-Platform}
 export DEFAULT_LANGUAGE=${DEFAULT_LANGUAGE:-en}
 export LAST_NAME_FIRST=${LAST_NAME_FIRST:-true}
 export CR_DATABASE=${CR_DATABASE:-defaultdb}
@@ -250,18 +250,25 @@ echo -e "CockroachDB Volume: \033[1;32m${_VOLUME_CR_DATA_PATH:-Docker named volu
 echo -e "CockroachDB Certs Volume: \033[1;32m${_VOLUME_CR_CERTS_PATH:-Docker named volume}\033[0m"
 echo -e "Redpanda Volume: \033[1;32m${_VOLUME_REDPANDA_PATH:-Docker named volume}\033[0m"
 
+compose_failed() {
+    echo -e "\033[1;31m'docker compose up -d' failed.\033[0m"
+    echo "If the error mentions 'gzip: invalid header' or another download error, an image layer"
+    echo "was corrupted in transit. Run 'docker compose pull' again, then 'docker compose up -d'."
+    exit 1
+}
+
 if [ "$QUICK" == true ]; then
     echo -e "\033[1;32mRunning 'docker compose up -d' now...\033[0m"
-    docker compose up -d
+    docker compose up -d || compose_failed
 else
-    read -p "Do you want to run 'docker compose up -d' now to start Huly? (Y/n): " RUN_DOCKER
+    read -p "Do you want to run 'docker compose up -d' now to start the platform? (Y/n): " RUN_DOCKER
     case "${RUN_DOCKER:-Y}" in
         [Yy]* )
              echo -e "\033[1;32mRunning 'docker compose up -d' now...\033[0m"
-             docker compose up -d
+             docker compose up -d || compose_failed
              ;;
         [Nn]* )
-            echo "You can run 'docker compose up -d' later to start Huly."
+            echo "You can run 'docker compose up -d' later to start the platform."
             ;;
     esac
 fi
@@ -275,7 +282,7 @@ if [ "$QUICK" == true ]; then
     echo -e "\033[1;32m✅ Quick setup complete!\033[0m"
     echo -e "\033[1;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
     echo ""
-    echo -e "🌐 Access Huly at: \033[1;36mhttp://localhost:8087\033[0m"
+    echo -e "🌐 Access the platform at: \033[1;36mhttp://localhost:8087\033[0m"
     echo ""
     echo -e "⏳ Wait ~60 seconds for all services to initialize..."
     echo -e "📊 Check status with: \033[1;33mdocker compose ps\033[0m"

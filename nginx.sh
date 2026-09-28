@@ -40,11 +40,12 @@ else
 fi
 
 # Extract IP address for redirect configuration
-IP_ADDRESS=$(grep -oE 'listen \K[^:]+(?=:[0-9]+ ssl;)' nginx.conf)
+# (portable: works with both GNU and BSD/macOS sed; grep -P is not available on macOS)
+IP_ADDRESS=$(sed -nE 's/.*listen ([^:;[:space:]]+):[0-9]+ ssl;.*/\1/p' nginx.conf | head -n 1)
 
 # Remove HTTP to HTTPS redirect server block if SSL is enabled
 if [[ -z "$SECURE" ]]; then
-    echo "Enabling SSL; removing HTTP to HTTPS redirect block..."
+    echo "SSL disabled; removing HTTP to HTTPS redirect block (if present)..."
     # Remove the entire server block for port 80
     if grep -q 'return 301 https://\$host\$request_uri;' nginx.conf; then
         sed -i.bak '/# !/,/!/d' nginx.conf
@@ -66,7 +67,18 @@ server {
 # DO NOT REMOVE COMMENT !" >> ./nginx.conf
 fi
 
-read -p "Do you want to run 'nginx -s reload' now to load your updated Huly config? (Y/n): " RUN_NGINX
+rm -f ./nginx.conf.bak
+
+# nginx.conf is only needed when a host-level nginx fronts the stack (server installs).
+# For local setups the bundled nginx container already serves the platform on HTTP_PORT.
+if ! command -v nginx >/dev/null 2>&1; then
+    echo "Host nginx not found; skipping reload. This is fine for local setups:"
+    echo "the platform is served by the bundled nginx container on port ${HTTP_PORT}."
+    echo "On a server, install nginx, link nginx.conf into its sites-enabled and run 'nginx -s reload'."
+    exit 0
+fi
+
+read -p "Do you want to run 'nginx -s reload' now to load your updated platform config? (Y/n): " RUN_NGINX
 case "${RUN_NGINX:-Y}" in  
     [Yy]* )
         echo -e "\033[1;32mRunning 'nginx -s reload' now...\033[0m"
@@ -79,6 +91,6 @@ case "${RUN_NGINX:-Y}" in
         fi
         ;;
     [Nn]* )
-        echo "You can run 'nginx -s reload' later to load your updated Huly config."
+        echo "You can run 'nginx -s reload' later to load your updated platform config."
         ;;
 esac

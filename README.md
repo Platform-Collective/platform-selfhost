@@ -1,12 +1,16 @@
-# Huly Self-Hosted
+# Platform Self-Hosted
 
-Please use this README if you want to deploy Huly on your server with `docker compose`. I'm using a Basic Droplet on Digital Ocean with Ubuntu 24.04, but these instructions can be easily adapted for any Linux distribution.
+Self-hosting configuration for the [Platform Collective platform](https://github.com/Platform-Collective/platform).
+
+This repository is a fork of [hcengineering/huly-selfhost](https://github.com/hcengineering/huly-selfhost) and is maintained independently.
+
+Please use this README if you want to deploy the platform on your server with `docker compose`. I'm using a Basic Droplet on Digital Ocean with Ubuntu 24.04, but these instructions can be easily adapted for any Linux distribution.
 
 If you prefer Kubernetes deployment, there is a sample Kubernetes configuration under [kube](kube) directory.
 
 ## System Requirements
 
-Huly is resource-heavy. Use a server that meets or exceeds the following:
+The platform is resource-heavy. Use a server that meets or exceeds the following:
 
 - **Minimum:** 2 vCPUs and 8 GB RAM
 - **Recommended:** 4 vCPUs and 16 GB RAM or more
@@ -17,13 +21,13 @@ Huly is resource-heavy. Use a server that meets or exceeds the following:
 
 ## Platform Repository
 
-The Huly platform source code is available on GitHub: **[hcengineering/platform](https://github.com/hcengineering/platform)**
+The platform source code is available on GitHub: **[Platform-Collective/platform](https://github.com/Platform-Collective/platform)**
 
 > [!NOTE]
 > For self-hosted deployments, use production versions (`v*` tags). For example: `v0.7.310`, `v0.7.307`, `v0.6.501`
-> See all available versions on [GitHub Releases](https://github.com/hcengineering/platform/releases).
+> See all available versions on [GitHub Releases](https://github.com/Platform-Collective/platform/releases).
 
-## Updating to a new Huly version
+## Updating to a new platform version
 
 > [!TIP]
 > For a step-by-step safe upgrade (backup, verification, and rollback), see
@@ -31,26 +35,26 @@ The Huly platform source code is available on GitHub: **[hcengineering/platform]
 
 Before updating, **always review `MIGRATION.md`** in this repository:
 
-- **Open `MIGRATION.md`** and find the section for your target version (for example `v0.7.423`).
+- **Open `MIGRATION.md`** and find the section for your target version (for example `s0.7.426`).
 - **If the section says "No changes required"**, you can upgrade just by updating container versions.
 - **If there are additional steps**, follow them carefully (backup, config changes, service additions/removals, etc.) **before** or **during** the update.
 - **If you are upgrading from any 0.6.x version to 0.7.x**, you **must** follow the dedicated migration steps in the `v0.7` section of `MIGRATION.md` (especially `v0.7.204`) instead of doing a direct in-place upgrade.
 
-To update an existing self-hosted deployment to a new Huly version:
+To update an existing self-hosted deployment to a new platform version:
 
 1. **Stop the stack (optional but recommended for major upgrades):**
    ```bash
-   cd huly-selfhost
+   cd platform-selfhost
    docker compose down
    ```
-2. **Update the `huly-selfhost` repository:**
+2. **Update the `platform-selfhost` repository:**
    ```bash
    git pull
    ```
-3. **Set the new Huly version in `.env`:**
+3. **Set the new platform version in `.env`:**
    - Edit the `.env` file in the project root and update:
-     - `HULY_VERSION` to the desired platform version tag (for example `v0.7.423`)
-     - `DESKTOP_CHANNEL` to the same version without the leading `v` (for example `0.7.423`) if you use the desktop app.
+     - `HULY_VERSION` to the desired platform version tag (for example `s0.7.426`)
+     - `DESKTOP_CHANNEL` to the same version without the leading `v`/`s` (for example `0.7.426`) if you use the desktop app.
 4. **Pull updated container images:**
    ```bash
    docker compose pull
@@ -76,11 +80,11 @@ deployment (database, file store, and config). See
 
 ## Disable default content in new workspaces
 
-By default, Huly can initialize new workspaces with predefined content. To disable that behavior, set `INIT_REPO_DIR` in the `workspace` service to a non-existing path:
+By default, the platform can initialize new workspaces with predefined content. To disable that behavior, set `INIT_REPO_DIR` in the `workspace` service to a non-existing path:
 
 ```yaml
 workspace:
-  image: hardcoreeng/workspace:${HULY_VERSION}
+  image: platformcollective/workspace:${HULY_VERSION}
   environment:
     # ...
     - INIT_REPO_DIR=/no-init-scripts
@@ -88,15 +92,15 @@ workspace:
 
 ## Architecture Overview
 
-For detailed information about the Huly self-hosted architecture, services, and their interactions, see [ARCHITECTURE_OVERVIEW.md](ARCHITECTURE_OVERVIEW.md).
+For detailed information about the self-hosted architecture, services, and their interactions, see [ARCHITECTURE_OVERVIEW.md](ARCHITECTURE_OVERVIEW.md).
 
 ## Quick Start (Local Testing)
 
 For fast local verification without going through the full setup process:
 
 ```bash
-git clone https://github.com/hcengineering/huly-selfhost.git
-cd huly-selfhost
+git clone https://github.com/Platform-Collective/platform-selfhost.git
+cd platform-selfhost
 ./setup.sh --quick
 ```
 
@@ -106,7 +110,7 @@ This will:
 - Use default Docker volumes
 - Automatically start all services
 
-Access Huly at **http://localhost:8087** (wait ~60 seconds for services to initialize). To stop all services, run `docker compose down` from the `huly-selfhost` folder.
+Access the platform at **http://localhost:8087** (wait ~60 seconds for services to initialize). To stop all services, run `docker compose down` from the `platform-selfhost` folder.
 
 > [!NOTE]
 > Quick start is intended for local testing only. For production deployments, follow the full setup instructions below.
@@ -128,13 +132,13 @@ sudo apt install nginx
 Install docker using the [recommended method](https://docs.docker.com/engine/install/ubuntu/) from docker website.
 Afterwards perform [post-installation steps](https://docs.docker.com/engine/install/linux-postinstall/). Pay attention to 3rd step with `newgrp docker` command, it needed for correct execution in setup script.
 
-## Clone the `huly-selfhost` repository and configure `nginx`
+## Clone the `platform-selfhost` repository and configure `nginx`
 
-Next, let's clone the `huly-selfhost` repository and configure Huly.
+Next, let's clone the `platform-selfhost` repository and configure the platform.
 
 ```bash
-git clone https://github.com/hcengineering/huly-selfhost.git
-cd huly-selfhost
+git clone https://github.com/Platform-Collective/platform-selfhost.git
+cd platform-selfhost
 ./setup.sh
 ```
 
@@ -155,14 +159,14 @@ sudo ln -s $(pwd)/nginx.conf /etc/nginx/sites-enabled/huly.conf
 >You can safely execute this script after adding your custom configurations like ssl. It will only overwrite the
 > necessary settings.
 
-Finally, let's reload `nginx` and start Huly with `docker compose`.
+Finally, let's reload `nginx` and start the platform with `docker compose`.
 
 ```bash
 sudo nginx -s reload
 sudo docker compose up -d
 ```
 
-Now, launch your web browser and enjoy Huly! To stop all services, run `docker compose down` from the `huly-selfhost` project directory.
+Now, launch your web browser and enjoy the platform! To stop all services, run `docker compose down` from the `platform-selfhost` project directory.
 
 > [!TIP]
 > Prefer **Caddy** (automatic HTTPS) or **Traefik** instead of nginx? See
@@ -183,7 +187,7 @@ down, so it doubles as a cron or monitoring probe:
 
 ## Troubleshooting
 
-### Huly opens, but user sign-up fails
+### The platform opens, but user sign-up fails
 
 If the UI loads but sign-up fails, check logs for the `account` service first:
 
@@ -203,7 +207,7 @@ This usually means HTTPS/WSS is enabled in configuration, but the endpoint is se
 
 ## Volume Configuration
 
-By default, Huly uses Docker named volumes to store persistent data (database, Elasticsearch indices, and uploaded files). You can optionally configure custom host paths for these volumes during the setup process.
+By default, the platform uses Docker named volumes to store persistent data (database, Elasticsearch indices, and uploaded files). You can optionally configure custom host paths for these volumes during the setup process.
 
 ### During Setup
 
@@ -332,7 +336,7 @@ Add the public key into `compose.yaml` in section `services:front:environment`:
 > [!NOTE]
 > In version 0.7.x and later, the legacy `ses` service has been replaced with the **`notification`** service for web push notifications and the `mail` service for sending emails using SES. New deployments should use the `notification` service.
 
-To enable web push notifications in Huly, you need to configure the `notification` service with the VAPID keys and point `transactor` to it.
+To enable web push notifications, you need to configure the `notification` service with the VAPID keys and point `transactor` to it.
 
 ### Step 1: Configure the Transactor Service
 
@@ -352,7 +356,7 @@ Add the `notification` container to your `docker-compose.yaml` file with the gen
 
 ```yaml
 notification:
-  image: hardcoreeng/notification:${HULY_VERSION}
+  image: platformcollective/notification:${HULY_VERSION}
   environment:
     - PORT=8091
     - SOURCE=mail@example.com
@@ -374,7 +378,7 @@ The Mail Service is responsible for sending email notifications and confirmation
 
     ```yaml
     mail:
-      image: hardcoreeng/mail:${HULY_VERSION}
+      image: platformcollective/mail:${HULY_VERSION}
       container_name: mail
       ports:
         - 8097:8097
@@ -486,22 +490,22 @@ If you're experiencing issues with email delivery, see the [SMTP Troubleshooting
 
 ## Gmail Integration
 
-Huly supports Gmail integration allowing users to connect their Gmail accounts and manage emails directly within the platform.
+The platform supports Gmail integration allowing users to connect their Gmail accounts and manage emails directly within the platform.
 
 For detailed setup instructions, see the [Gmail Configuration Guide](guides/gmail-configuration.md).
 
 
 ## Love Service (Audio & Video calls)
 
-Huly audio and video calls are created on top of LiveKit insfrastructure. In order to use Love service in your
-self-hosted Huly, perform the following steps:
+Audio and video calls are created on top of LiveKit insfrastructure. In order to use Love service in your
+self-hosted deployment, perform the following steps:
 
 1. Set up [LiveKit Cloud](https://cloud.livekit.io) account
 2. Add `love` container to the docker-compose.yaml
 
     ```yaml
       love:
-        image: hardcoreeng/love:${HULY_VERSION}
+        image: platformcollective/love:${HULY_VERSION}
         container_name: love
         ports:
           - 8096:8096
@@ -542,7 +546,7 @@ It will allow the following functions to work:
 - Information about who is viewing/editing objects right now
 - Shows that someone is typing a message in a chat.
 
-Since Huly platform version `v0.7.375`, HulyPulse supports an **in-memory backend**.
+Since platform version `v0.7.375`, HulyPulse supports an **in-memory backend**.
 By default, templates in this repository use:
 
 - `HULY_BACKEND=memory`
@@ -580,7 +584,7 @@ This mode does not require Redis and is suitable for single-node or small self-h
     sudo nginx -s reload
     ```
 
-5. Recreate and start the stack from the `huly-selfhost` folder:
+5. Recreate and start the stack from the `platform-selfhost` folder:
 
     ```bash
     docker compose up -d --force-recreate
@@ -603,7 +607,7 @@ Redis can be used as an alternative backend for HulyPulse – for example, in mu
      # - HULY_REDIS_URLS=redis://:YOUR_PASSWORD@redis:6379
      ```
 
-2. Redis is configured with a 512 MB memory limit by default in the provided `compose.yml`. Adjust limits, password, and URLs as needed for your production setup. The image tag uses `HULY_PULSE_VERSION` if set (default `0.1.29`).
+2. Redis is configured with a 512 MB memory limit by default in the provided `compose.yml`. Adjust limits, password, and URLs as needed for your production setup. The image tag uses `HULY_PULSE_VERSION` if set (defaults to `HULY_VERSION`).
 
 ## Print Service
 
@@ -611,7 +615,7 @@ Redis can be used as an alternative backend for HulyPulse – for example, in mu
 
     ```yaml
       print:
-        image: hardcoreeng/print:${HULY_VERSION}
+        image: platformcollective/print:${HULY_VERSION}
         container_name: print
         ports:
           - 4005:4005
@@ -644,7 +648,7 @@ Redis can be used as an alternative backend for HulyPulse – for example, in mu
 
 ```yml
 exports:
-    image: hardcoreeng/export:${HULY_VERSION}
+    image: platformcollective/export:${HULY_VERSION}
     ports:
       - 4009:4009
     environment:
@@ -672,7 +676,7 @@ front:
 
 ## AI Service
 
-Huly provides AI-powered chatbot that provides several services:
+The platform provides an AI-powered chatbot that provides several services:
 
 - chat with AI
 - text message translations in the chat
@@ -687,7 +691,7 @@ Huly provides AI-powered chatbot that provides several services:
 
     ```yaml
       aibot:
-        image: hardcoreeng/ai-bot:${HULY_VERSION}
+        image: platformcollective/ai-bot:${HULY_VERSION}
         ports:
           - 4010:4010
         environment:
@@ -698,7 +702,7 @@ Huly provides AI-powered chatbot that provides several services:
           - MONGO_URL=mongodb://mongodb:27017
           - STATS_URL=http://stats:4900
           - FIRST_NAME=Bot
-          - LAST_NAME=Huly AI
+          - LAST_NAME=Platform AI
           - PASSWORD=<PASSWORD>
           - OPENAI_API_KEY=<OPENAI_API_KEY>
           - OPENAI_BASE_URL=<OPENAI_BASE_URL>
@@ -737,7 +741,7 @@ Huly provides AI-powered chatbot that provides several services:
 
 ## Configure Google Calendar Service
 
-To integrate Google Calendar with Huly, follow these steps:
+To integrate Google Calendar with the platform, follow these steps:
 
 ### Google side
 
@@ -751,7 +755,7 @@ Add `calendar` container to the docker-compose.yaml
 
 ```yaml
   calendar:
-    image: hardcoreeng/calendar:${HULY_VERSION}
+    image: platformcollective/calendar:${HULY_VERSION}
     ports:
       - 8095:8095
     environment:
@@ -770,7 +774,7 @@ Add `calendar` container to the docker-compose.yaml
 
 ## Configure OpenID Connect (OIDC)
 
-You can configure a Huly instance to authorize users (sign-in/sign-up) using an OpenID Connect identity provider (IdP).
+You can configure a platform instance to authorize users (sign-in/sign-up) using an OpenID Connect identity provider (IdP).
 
 ### On the IdP side
 1. Create a new OpenID application.
@@ -781,7 +785,7 @@ You can configure a Huly instance to authorize users (sign-in/sign-up) using an 
 
 2. Configure user access to the application as needed.
 
-### On the Huly side
+### On the platform side
 
 For the account service, set the following environment variables as provided by the IdP:
 
@@ -800,7 +804,7 @@ sign-in/sign-up pages.
 
 ## Configure GitHub OAuth
 
-You can also configure a Huly instance to use GitHub OAuth for user authorization (sign-in/sign-up).
+You can also configure a platform instance to use GitHub OAuth for user authorization (sign-in/sign-up).
 
 ### On the GitHub side
 1. Create a new GitHub OAuth application.
@@ -810,7 +814,7 @@ You can also configure a Huly instance to use GitHub OAuth for user authorizatio
    **URI Example:**
    - `http://huly.mydomain.com/_accounts/auth/github/callback`
 
-### On the Huly side
+### On the platform side
 
 Specify the following environment variables for the account service:
 
@@ -852,7 +856,7 @@ development tool to create the first account._
 
 ## GitHub Service
 
-Huly provides GitHub integration for bi-directional synchronization of issues, pull requests, comments, and reviews.
+The platform provides GitHub integration for bi-directional synchronization of issues, pull requests, comments, and reviews.
 
 ### Prerequisites
 
@@ -899,7 +903,7 @@ Enable the following event subscriptions:
 
 ```yaml
 github:
-  image: hardcoreeng/github:${HULY_VERSION}
+  image: platformcollective/github:${HULY_VERSION}
   ports:
     - 3500:3500
   environment:
@@ -942,7 +946,7 @@ github:
 
 ## Telegram Bot Service
 
-Telegram Bot Service is responsible for sending notifications from Huly to Telegram (private chats or groups). The service works as an external notification channel and does not provide interactive control or command execution for Huly.
+Telegram Bot Service is responsible for sending notifications from the platform to Telegram (private chats or groups). The service works as an external notification channel and does not provide interactive control or command execution for the platform.
 
 ### Prerequisites
 
@@ -958,7 +962,7 @@ Telegram Bot Service is responsible for sending notifications from Huly to Teleg
 
 ```yaml
   telegram-bot:
-    image: hardcoreeng/telegram-bot:${HULY_VERSION}
+    image: platformcollective/telegram-bot:${HULY_VERSION}
     container_name: telegram-bot
     restart: unless-stopped
     environment:

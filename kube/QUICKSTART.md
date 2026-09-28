@@ -67,7 +67,7 @@ echo "127.0.0.1       transactor.huly.example" | sudo tee -a /etc/hosts
 echo "127.0.0.1       collaborator.huly.example" | sudo tee -a /etc/hosts
 ```
 
-Deploy Huly with `kubectl`:
+Deploy the platform with `kubectl`:
 
 ```bash
 kubectl create namespace huly-v7
@@ -80,7 +80,7 @@ Wait until the front app is coming up:
 kubectl wait --for=condition=Avaiable deployment/front --timeout 3m
 ```
 
-Now, launch your web and and (enjoy Huly!)[http://huly.example]!
+Now, launch your web and and [enjoy the platform!](http://huly.example)!
 
 
 ## Cleanup
@@ -90,7 +90,7 @@ Restore hosts file:
 sudo mv /tmp/hosts /etc/hosts
 ```
 
-Cleanup Huly:
+Cleanup:
 ```bash
 kubectl delete -R -f .
 ```

@@ -1,8 +1,8 @@
-Huly has been installed!
+The platform has been installed!
 
 {{- $proto := ternary "https" "http" (and .Values.ingress.enabled .Values.ingress.tls.enabled) }}
 
-Your Huly instance will be available at:
+Your platform instance will be available at:
 
   {{ $proto }}://{{ .Values.domain }}
 

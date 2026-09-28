@@ -1,14 +1,14 @@
-# Huly Self-Hosted Architecture Overview
+# Platform Self-Hosted Architecture Overview
 
 ## Service Overview
 
-The Huly self-hosted deployment consists of 14 services working together. This section describes each service and its role in the platform.
+The self-hosted deployment consists of 14 services working together. This section describes each service and its role in the platform.
 
 ### Application Services
 
 | Service | Description |
 |---------|-------------|
-| **front** | Web application server that serves the Huly UI. Handles static assets, client-side routing, and coordinates with backend services for data and authentication. |
+| **front** | Web application server that serves the platform UI. Handles static assets, client-side routing, and coordinates with backend services for data and authentication. |
 | **account** | Authentication and user management service. Handles user registration, login, JWT token generation/validation, and workspace membership. |
 | **transactor** | Core transaction processing engine. Maintains WebSocket connections with clients for real-time updates, processes all data mutations, enforces business logic, and publishes events to the message queue. |
 | **workspace** | Workspace lifecycle management. Handles workspace creation, initialization, upgrades, and configuration. Runs background jobs for workspace maintenance. |
@@ -24,7 +24,7 @@ The Huly self-hosted deployment consists of 14 services working together. This s
 | **nginx** | Reverse proxy and SSL termination. Routes external requests to internal services, handles HTTPS certificates, and provides a single entry point for all client connections. |
 | **cockroach** | CockroachDB - the primary database. Stores all application data including users, workspaces, documents, and metadata. Provides ACID transactions and horizontal scalability. |
 | **elastic** | Elasticsearch search engine. Stores and indexes document content for fast full-text search queries. Managed by the fulltext service. |
-| **minio** | S3-compatible object storage. Stores all binary files including attachments, images, and document blobs. Accessed directly by nginx for file downloads. |
+| **minio** | S3-compatible object storage, powered by [Silo](https://github.com/pgsty/silo) (a MinIO-compatible fork; the upstream MinIO community edition is no longer maintained). The service keeps the `minio` name for compatibility. Stores all binary files including attachments, images, and document blobs. Accessed directly by nginx for file downloads. |
 | **redpanda** | Kafka-compatible event streaming platform. Provides reliable message delivery between services for asynchronous processing (e.g., search indexing after document changes). |
 | **kvs (HulyKVS)** | Key-value store service. Provides fast key-value storage for application configuration, user preferences, and cached data. |
 
@@ -270,24 +270,24 @@ sequenceDiagram
 | **Reverse Proxy** | | | | |
 | nginx | nginx:1.21.3 | 80/443 | Reverse proxy, SSL termination | all services |
 | **Frontend** | | | | |
-| front | hardcoreeng/front | 8080 | Web application server | account, minio |
+| front | platformcollective/front | 8080 | Web application server | account, minio |
 | **Core** | | | | |
-| account | hardcoreeng/account | 3000 | Authentication & user management | cockroach, redpanda |
-| transactor | hardcoreeng/transactor | 3333 | Transaction processing (WebSocket) | cockroach, redpanda, fulltext |
-| workspace | hardcoreeng/workspace | - | Workspace management | cockroach, redpanda, minio |
-| collaborator | hardcoreeng/collaborator | 3078 | Real-time document collaboration | account, minio |
+| account | platformcollective/account | 3000 | Authentication & user management | cockroach, redpanda |
+| transactor | platformcollective/transactor | 3333 | Transaction processing (WebSocket) | cockroach, redpanda, fulltext |
+| workspace | platformcollective/workspace | - | Workspace management | cockroach, redpanda, minio |
+| collaborator | platformcollective/collaborator | 3078 | Real-time document collaboration | account, minio |
 | **Storage** | | | | |
-| kvs (HulyKVS) | hardcoreeng/hulykvs | 8094 | Key-value store | cockroach |
+| kvs (HulyKVS) | platformcollective/hulykvs | 8094 | Key-value store | cockroach |
 | **Search** | | | | |
-| fulltext | hardcoreeng/fulltext | 4700 | Full-text search indexing | elasticsearch, cockroach, rekoni, redpanda |
-| rekoni | hardcoreeng/rekoni-service | 4004 | AI/ML recognition service | - |
+| fulltext | platformcollective/fulltext | 4700 | Full-text search indexing | elasticsearch, cockroach, rekoni, redpanda |
+| rekoni | platformcollective/rekoni-service | 4004 | AI/ML recognition service | - |
 | **Monitoring** | | | | |
-| stats | hardcoreeng/stats | 4900 | Metrics collection | - |
+| stats | platformcollective/stats | 4900 | Metrics collection | - |
 | **Primary Database** | | | | |
 | cockroach | cockroachdb/cockroach | 26257 | Distributed SQL database | - |
 | **Supporting Infrastructure** | | | | |
 | elastic | elasticsearch:7.14.2 | 9200 | Search engine | - |
-| minio | minio/minio | 9000/9001 | Object storage | - |
+| minio | pgsty/silo:RELEASE.2026-09-16T00-00-00Z | 9000/9001 | Object storage | - |
 | redpanda | redpandadata/redpanda | 9092/19092 | Event streaming (Kafka) | - |
 
 ---
@@ -323,7 +323,7 @@ sequenceDiagram
 
 ## Services NOT Included in Self-Hosted
 
-The following services are available in Huly Cloud/Enterprise but **not included** in the self-hosted deployment:
+The following services are part of the platform but **not included** in the self-hosted deployment:
 
 | Service | Purpose |
 |---------|---------|

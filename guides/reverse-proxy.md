@@ -1,14 +1,14 @@
 # Reverse proxy options
 
-Huly's `front` service is served on a single local port (`HTTP_PORT`, default `8087`), and
+The platform's `front` service is served on a single local port (`HTTP_PORT`, default `8087`), and
 the app uses **WebSockets** (the transactor). So any reverse proxy in front of it must
-forward WebSocket upgrades and the usual `X-Forwarded-*` headers, and Huly must be told it
+forward WebSocket upgrades and the usual `X-Forwarded-*` headers, and the platform must be told it
 is behind TLS so it emits `https`/`wss` URLs.
 
 > [!IMPORTANT]
-> Keep Huly's config consistent with the proxy. When you terminate TLS at the proxy, set
+> Keep the platform config consistent with the proxy. When you terminate TLS at the proxy, set
 > `SECURE=true` and `HOST_ADDRESS=your-domain` in `huly.conf` / `.env`. A mismatch (proxy on
-> HTTPS while Huly still emits `http://` / `ws://`) is the usual cause of "Failed to fetch"
+> HTTPS while the platform still emits `http://` / `ws://`) is the usual cause of "Failed to fetch"
 > and WebSocket errors after the UI loads.
 
 ## nginx (default)
@@ -18,7 +18,7 @@ is behind TLS so it emits `https`/`wss` URLs.
 
 ## Caddy (automatic HTTPS)
 
-[`examples/Caddyfile`](../examples/Caddyfile) fronts Huly with automatic Let's Encrypt TLS
+[`examples/Caddyfile`](../examples/Caddyfile) fronts the platform with automatic Let's Encrypt TLS
 and transparent WebSocket support - no manual certificates, no renewal cron:
 
 ```caddy
@@ -34,5 +34,5 @@ file). Caddy handles certificate issuance/renewal and the WebSocket upgrade for 
 ## Traefik
 
 A sample Traefik setup lives under [`traefik/`](../traefik). As with the others, set
-`SECURE=true` and `HOST_ADDRESS` so Huly emits `https`/`wss`, and make sure the router
+`SECURE=true` and `HOST_ADDRESS` so the platform emits `https`/`wss`, and make sure the router
 forwards WebSockets to the `front` service.

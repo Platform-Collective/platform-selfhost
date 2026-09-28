@@ -1,6 +1,6 @@
-# Huly Kubernetes Deployment
+# Platform Kubernetes Deployment
 
-This folder contains a sample configuration for Huly Kubernetes deployment.
+This folder contains a sample configuration for platform Kubernetes deployment.
 
 ## Requires
 
@@ -10,12 +10,12 @@ If you don't have any k8s cluster, consider using the [kind setup](QUICKSTART.md
 
 ## Check and update configuration
 
-Huly deployment configuration is located in [config.yaml](config/config.yaml) and [secret.yaml](config/secret.yaml) files.
-The sample configuration assume that Huly is available on huly.example hostname with dedicated hostname per service.
+Deployment configuration is located in [config.yaml](config/config.yaml) and [secret.yaml](config/secret.yaml) files.
+The sample configuration assumes that the platform is available on huly.example hostname with dedicated hostname per service.
 
-## Deploy Huly to Kubernetes
+## Deploy the platform to Kubernetes
 
-Deploy Huly with `kubectl`.
+Deploy the platform with `kubectl`.
 
 ```bash
 kubectl create namespace huly-v7
@@ -23,4 +23,4 @@ kubectl create namespace huly-v7
 kubectl apply -R -f . --namespace huly-v7
 ```
 
-Now, launch your web browser and enjoy Huly!
+Now, launch your web browser and enjoy the platform!

@@ -1,12 +1,13 @@
 apiVersion: v2
 name: huly
-description: Huly — open-source project management platform
+description: Platform Collective platform — self-hosted deployment
 type: application
 version: 0.1.0
-appVersion: "0.7.423"
-home: https://huly.io
+appVersion: "s0.7.426"
+home: https://github.com/Platform-Collective/platform
 sources:
-  - https://github.com/hcengineering/huly-selfhost
+  - https://github.com/Platform-Collective/platform-selfhost
+  - https://github.com/Platform-Collective/platform
 keywords:
   - huly
   - project-management

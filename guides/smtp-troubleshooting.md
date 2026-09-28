@@ -1,6 +1,6 @@
 # SMTP Troubleshooting Guide
 
-This guide helps you diagnose and resolve common SMTP configuration issues in your Huly self-hosted deployment.
+This guide helps you diagnose and resolve common SMTP configuration issues in your self-hosted deployment.
 
 ## Checking Mail Service Status
 
@@ -134,7 +134,7 @@ Test SMTP connectivity from within the Docker environment:
 
 ```bash
 # Run a temporary container in the same network
-sudo docker run --rm -it --network huly-selfhost_default alpine sh
+sudo docker run --rm -it --network platform-selfhost_default alpine sh
 
 # Inside the container, install curl and test
 apk add curl

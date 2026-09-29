@@ -81,6 +81,15 @@ jobs:
           docker compose restart
           tests/smoke.sh --verify
 
+      - name: Services recreated behind a running nginx
+        run: |
+          # recreated containers get new IPs; nginx must follow them without a restart
+          ip() { docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$(docker compose ps -q "$1")"; }
+          before="account=$(ip account) transactor=$(ip transactor)"
+          docker compose up -d --force-recreate --no-deps account transactor
+          echo "IPs: $before -> account=$(ip account) transactor=$(ip transactor)"
+          tests/smoke.sh --verify
+
       - name: Report failure
         if: failure()
         run: tests/ci-report.sh

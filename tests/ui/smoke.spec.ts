@@ -53,13 +53,25 @@ async function openTracker (page: Page): Promise<void> {
   await page.waitForURL(/\/tracker(\/|$)/)
   const base = page.url().replace(/\/tracker(\/.*)?$/, '/tracker')
   await page.goto(`${base}/all-issues`)
-  await expect(newIssueButton(page)).toBeVisible()
+  await expect(page.locator('label[data-id="tab-all"]').or(newIssueButton(page)).first()).toBeVisible({ timeout: 60_000 })
   // new issues land in Backlog, which the default "Active" tab hides
   const tabAll = page.locator('label[data-id="tab-all"]')
   if (await tabAll.isVisible()) await tabAll.click()
 }
 
 const newIssueButton = (page: Page): Locator => page.getByRole('button', { name: 'New issue' }).first()
+const newIssueForm = (page: Page): Locator => page.locator('form[id="tracker:string:NewIssue"]')
+
+async function openNewIssueForm (page: Page): Promise<void> {
+  // the navigator with the "New issue" button may be collapsed; "C" is the tracker hotkey for it
+  if (await newIssueButton(page).isVisible()) {
+    await newIssueButton(page).click()
+  } else {
+    await page.keyboard.press('Escape')
+    await page.keyboard.press('c')
+  }
+  await expect(newIssueForm(page)).toBeVisible()
+}
 
 // On failure print where the page was, as a GitHub annotation
 test.afterEach(async ({ page }, testInfo) => {
@@ -78,8 +90,8 @@ test('log in, open workspace, create an issue', async ({ page }) => {
     title = readState(uiStateFile).SMOKE_ISSUE_TITLE
   } else {
     title = `Smoke issue ${Date.now()}`
-    await newIssueButton(page).click()
-    await page.locator('form[id="tracker:string:NewIssue"] input[type="text"]').fill(title)
+    await openNewIssueForm(page)
+    await newIssueForm(page).locator('input[type="text"]').first().fill(title)
     await page.locator('button > span', { hasText: 'Create issue' }).click()
     await expect(page.locator('a', { hasText: title })).toBeVisible()
     writeFileSync(uiStateFile, `SMOKE_ISSUE_TITLE=${title}\n`)
@@ -87,8 +99,8 @@ test('log in, open workspace, create an issue', async ({ page }) => {
 
   // the issue must come back from the server, not from local state
   await page.reload()
-  await expect(newIssueButton(page)).toBeVisible({ timeout: 60_000 })
   const tabAll = page.locator('label[data-id="tab-all"]')
-  if (await tabAll.isVisible()) await tabAll.click()
+  await expect(tabAll).toBeVisible({ timeout: 60_000 })
+  await tabAll.click()
   await expect(page.locator('a', { hasText: title })).toBeVisible({ timeout: 60_000 })
 })

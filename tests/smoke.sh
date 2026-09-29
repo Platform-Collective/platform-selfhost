@@ -203,6 +203,12 @@ docker compose ps -q | xargs docker inspect --format '{{.Name}} restarts={{.Rest
   | awk -F'restarts=' '$2>0{print "    note: " $0}'
 ok "no service is restarting"
 
+# services report metrics to stats every 10s; a wrong STATS_URL shows up as a steady
+# stream of fetch errors (a couple right after start, before stats is up, are fine)
+stats_errors=$(docker compose logs --no-color --since 60s 2>/dev/null | grep '"statsUrl"' | grep -c 'fetch failed' || true)
+[ "${stats_errors:-0}" -lt 3 ] || fail "$stats_errors failed reports to stats in the last minute (check STATS_URL): $(docker compose logs --no-color --since 60s | grep '"statsUrl"' | grep 'fetch failed' | head -1 | cut -c1-300)"
+ok "services reach the stats service"
+
 if [ "$MODE" = fresh ]; then
   {
     printf 'SMOKE_EMAIL=%q\n' "$SMOKE_EMAIL"

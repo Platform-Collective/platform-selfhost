@@ -15,6 +15,8 @@ annotate() { # annotate <title> <file>
 }
 
 docker compose ps -a --format 'table {{.Service}}\t{{.State}}\t{{.Status}}' > /tmp/ci-ps.txt 2>&1
+echo "--- IPs:" >> /tmp/ci-ps.txt
+docker compose ps -q | xargs docker inspect --format '{{index .Config.Labels "com.docker.compose.service"}} {{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' >> /tmp/ci-ps.txt 2>&1
 annotate "docker compose ps" /tmp/ci-ps.txt
 
 # services that are not running, unhealthy or restarted: show their last log lines

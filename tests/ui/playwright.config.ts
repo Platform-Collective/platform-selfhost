@@ -5,7 +5,7 @@ export default defineConfig({
   timeout: 180_000,
   expect: { timeout: 30_000 },
   retries: process.env.CI !== undefined ? 1 : 0,
-  reporter: [['list'], ['html', { open: 'never' }]],
+  reporter: [['list'], ['html', { open: 'never' }], ...(process.env.CI !== undefined ? [['github'] as const] : [])],
   use: {
     ...devices['Desktop Chrome'],
     baseURL: process.env.HULY_URL ?? 'http://localhost:8087',

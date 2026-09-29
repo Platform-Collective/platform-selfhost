@@ -24,12 +24,11 @@ for cid in $(docker compose ps -aq); do
     '{{index .Config.Labels "com.docker.compose.service"}} {{.State.Status}} {{if .State.Health}}{{.State.Health.Status}}{{else}}-{{end}} {{.RestartCount}}')
   if [ "$state" != running ] || [ "$health" = unhealthy ] || [ "${restarts:-0}" -gt 0 ]; then
     {
+      docker logs --tail 15 "$cid" 2>&1 | cut -c1-300
       if [ "$health" != - ]; then
         echo "--- last healthcheck output:"
         docker inspect "$cid" --format '{{range .State.Health.Log}}exit={{.ExitCode}} {{.Output}}{{end}}' | tail -c 800
-        echo "--- log:"
       fi
-      docker logs --tail 25 "$cid" 2>&1
     } > "/tmp/ci-$svc.log"
     annotate "$svc: $state/$health, restarts=$restarts" "/tmp/ci-$svc.log"
     n=$((n + 1))
@@ -40,7 +39,9 @@ done
 # errors from the services the smoke test talks to
 for svc in account workspace transactor front; do
   docker compose logs --no-color --tail 400 "$svc" 2>/dev/null \
-    | grep -iE 'error|exception|fatal' | tail -15 > "/tmp/ci-err-$svc.log"
+    | grep -iE 'error|exception|fatal' \
+    | sed -E 's/"timestamp":"[^"]*"//; s/[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z//g' | awk '!seen[$0]++' \
+    | tail -8 | cut -c1-400 > "/tmp/ci-err-$svc.log"
   [ -s "/tmp/ci-err-$svc.log" ] && annotate "$svc errors" "/tmp/ci-err-$svc.log"
 done
 exit 0

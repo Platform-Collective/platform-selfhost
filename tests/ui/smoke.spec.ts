@@ -77,7 +77,18 @@ async function openNewIssueForm (page: Page): Promise<void> {
 test.afterEach(async ({ page }, testInfo) => {
   if (testInfo.status === testInfo.expectedStatus || process.env.GITHUB_ACTIONS === undefined) return
   const text = (await page.locator('body').innerText().catch(() => '')).replace(/\s+/g, ' ').slice(0, 1500)
-  const msg = `url: ${page.url()}\ntext: ${text}`.replace(/%/g, '%25').replace(/\r/g, '').replace(/\n/g, '%0A')
+  const dom = await page
+    .evaluate(() => {
+      const ids = (sel: string): string =>
+        Array.from(document.querySelectorAll(sel))
+          .map((e) => e.id || e.getAttribute('aria-label') || e.getAttribute('data-id') || (e.textContent ?? '').trim().slice(0, 20))
+          .filter((x) => x !== '')
+          .slice(0, 60)
+          .join(' | ')
+      return `buttons: ${ids('button')}\nforms: ${ids('form')}\nnavigator: ${document.querySelector('.antiPanel-navigator') !== null}`
+    })
+    .catch((e) => `dom: ${String(e)}`)
+  const msg = `url: ${page.url()}\n${dom}\ntext: ${text.slice(0, 600)}`.replace(/%/g, '%25').replace(/\r/g, '').replace(/\n/g, '%0A')
   console.log(`::error title=ui page at failure (retry ${testInfo.retry})::${msg}`)
 })
 

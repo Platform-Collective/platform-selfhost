@@ -203,6 +203,18 @@ docker compose ps -q | xargs docker inspect --format '{{.Name}} restarts={{.Rest
   | awk -F'restarts=' '$2>0{print "    note: " $0}'
 ok "no service is restarting"
 
+# Docker marks a container "unhealthy" only after `retries` failed probes in a row
+# (100s for redpanda), which a quick run can miss; look at the failing streak instead.
+failing=$(docker compose ps -q | xargs docker inspect --format \
+  '{{if .State.Health}}{{index .Config.Labels "com.docker.compose.service"}} {{.State.Health.Status}} {{.State.Health.FailingStreak}}{{end}}' \
+  | awk 'NF && ($2=="unhealthy" || $3>=3){print $1" ("$2", "$3" failed probes)"}')
+if [ -n "$failing" ]; then
+  last=$(docker inspect --format '{{range .State.Health.Log}}{{.Output}}{{end}}' \
+    "$(docker compose ps -q "${failing%% *}")" | tail -c 300)
+  fail "healthcheck failing: $failing; last output: $last"
+fi
+ok "healthchecks pass"
+
 # services report metrics to stats every 10s; a wrong STATS_URL shows up as a steady
 # stream of fetch errors (a couple right after start, before stats is up, are fine)
 stats_errors=$(docker compose logs --no-color --since 60s 2>/dev/null | grep '"statsUrl"' | grep -c 'fetch failed' || true)

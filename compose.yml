@@ -45,7 +45,10 @@ services:
       - REDPANDA_SUPERUSER_USERNAME=${REDPANDA_ADMIN_USER}
       - REDPANDA_SUPERUSER_PASSWORD=${REDPANDA_ADMIN_PWD}
     healthcheck:
-      test: ['CMD', 'rpk', 'cluster', 'info', '-X', 'user=${REDPANDA_ADMIN_USER}', '-X', 'pass=${REDPANDA_ADMIN_PWD}']
+      # SASL is not enabled on the Kafka listener (services connect to redpanda:9092
+      # without auth), so rpk must not send credentials: with them the broker answers
+      # ILLEGAL_SASL_STATE and the container stays unhealthy.
+      test: ['CMD', 'rpk', 'cluster', 'info']
       interval: 10s
       timeout: 5s
       retries: 10

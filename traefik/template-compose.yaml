@@ -120,7 +120,7 @@ services:
       <<: *common-env
       SERVER_PORT: 3333
       SERVER_CURSOR_MAXTIMEMS: 30000
-      FRONT_URL: http://localhost:8087
+      FRONT_URL: https://${SERVER_ADDRESS}
       FULLTEXT_URL: http://fulltext:4700
       LAST_NAME_FIRST: true
     networks:

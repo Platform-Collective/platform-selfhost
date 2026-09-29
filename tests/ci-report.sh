@@ -37,9 +37,9 @@ for cid in $(docker compose ps -aq); do
 done
 
 # errors from the services the smoke test talks to
-for svc in account workspace transactor front; do
+for svc in nginx account workspace transactor front; do
   docker compose logs --no-color --tail 400 "$svc" 2>/dev/null \
-    | grep -iE 'error|exception|fatal' \
+    | grep -iE 'error|exception|fatal| 50[234] ' \
     | sed -E 's/"timestamp":"[^"]*"//; s/[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z//g' | awk '!seen[$0]++' \
     | tail -8 | cut -c1-400 > "/tmp/ci-err-$svc.log"
   [ -s "/tmp/ci-err-$svc.log" ] && annotate "$svc errors" "/tmp/ci-err-$svc.log"

@@ -116,7 +116,11 @@ account_answers() {
   curl -sS --max-time 10 -X POST "$ACCOUNTS_URL" -H 'Content-Type: application/json' \
     -d '{"method":"smokePing","params":{}}' 2>/dev/null | jq -e 'has("error") or has("result")' >/dev/null
 }
-retry 120 account_answers || fail "account service does not answer JSON-RPC at $ACCOUNTS_URL"
+if ! retry 120 account_answers; then
+  code=$(curl -s -o /tmp/smoke-account.out -w '%{http_code}' --max-time 10 -X POST "$ACCOUNTS_URL" \
+    -H 'Content-Type: application/json' -d '{"method":"smokePing","params":{}}' || true)
+  fail "account service does not answer JSON-RPC at $ACCOUNTS_URL (HTTP $code: $(head -c 200 /tmp/smoke-account.out))"
+fi
 ok "account service responds through the proxy"
 
 # ---------------------------------------------------------------------------

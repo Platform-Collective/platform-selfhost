@@ -63,10 +63,17 @@ const newIssueButton = (page: Page): Locator => page.getByRole('button', { name:
 const newIssueForm = (page: Page): Locator => page.locator('form[id="tracker:string:NewIssue"]')
 
 async function openNewIssueForm (page: Page): Promise<void> {
-  // the navigator with the "New issue" button may be collapsed; "C" is the tracker hotkey for it
+  // the navigator with the "New issue" button starts collapsed on a fresh profile
+  const navigator = page.locator('.antiPanel-navigator')
+  const showMenu = page.locator('button[id="app-workbench:string:ShowMenu"]')
+  if (!(await navigator.isVisible()) && (await showMenu.isVisible())) {
+    await showMenu.click()
+    await expect(navigator).toBeVisible()
+  }
   if (await newIssueButton(page).isVisible()) {
     await newIssueButton(page).click()
   } else {
+    // "C" is the tracker hotkey for "New issue"
     await page.keyboard.press('Escape')
     await page.keyboard.press('c')
   }

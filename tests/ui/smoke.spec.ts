@@ -7,7 +7,7 @@
 // SMOKE_MODE=verify only checks that the issue created by an earlier run (saved
 // in tests/.smoke-ui-state) is still there, e.g. after an upgrade.
 
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 import { existsSync, readFileSync, writeFileSync } from 'fs'
 import path from 'path'
 
@@ -49,8 +49,25 @@ async function openTracker (page: Page): Promise<void> {
   await expect(tracker.or(workspaceCard).first()).toBeVisible({ timeout: 60_000 })
   if (!(await tracker.isVisible())) await workspaceCard.click()
   await tracker.click()
-  await page.locator('a[href$="all-issues"]').click()
+  // go to "All issues" by URL: independent of how the navigator is laid out
+  await page.waitForURL(/\/tracker(\/|$)/)
+  const base = page.url().replace(/\/tracker(\/.*)?$/, '/tracker')
+  await page.goto(`${base}/all-issues`)
+  await expect(newIssueButton(page)).toBeVisible()
+  // new issues land in Backlog, which the default "Active" tab hides
+  const tabAll = page.locator('label[data-id="tab-all"]')
+  if (await tabAll.isVisible()) await tabAll.click()
 }
+
+const newIssueButton = (page: Page): Locator => page.getByRole('button', { name: 'New issue' }).first()
+
+// On failure print where the page was, as a GitHub annotation
+test.afterEach(async ({ page }, testInfo) => {
+  if (testInfo.status === testInfo.expectedStatus || process.env.GITHUB_ACTIONS === undefined) return
+  const text = (await page.locator('body').innerText().catch(() => '')).replace(/\s+/g, ' ').slice(0, 1500)
+  const msg = `url: ${page.url()}\ntext: ${text}`.replace(/%/g, '%25').replace(/\r/g, '').replace(/\n/g, '%0A')
+  console.log(`::error title=ui page at failure (retry ${testInfo.retry})::${msg}`)
+})
 
 test('log in, open workspace, create an issue', async ({ page }) => {
   await login(page)
@@ -61,7 +78,7 @@ test('log in, open workspace, create an issue', async ({ page }) => {
     title = readState(uiStateFile).SMOKE_ISSUE_TITLE
   } else {
     title = `Smoke issue ${Date.now()}`
-    await page.locator('button > div', { hasText: 'New issue' }).click()
+    await newIssueButton(page).click()
     await page.locator('form[id="tracker:string:NewIssue"] input[type="text"]').fill(title)
     await page.locator('button > span', { hasText: 'Create issue' }).click()
     await expect(page.locator('a', { hasText: title })).toBeVisible()
@@ -70,5 +87,8 @@ test('log in, open workspace, create an issue', async ({ page }) => {
 
   // the issue must come back from the server, not from local state
   await page.reload()
+  await expect(newIssueButton(page)).toBeVisible({ timeout: 60_000 })
+  const tabAll = page.locator('label[data-id="tab-all"]')
+  if (await tabAll.isVisible()) await tabAll.click()
   await expect(page.locator('a', { hasText: title })).toBeVisible({ timeout: 60_000 })
 })

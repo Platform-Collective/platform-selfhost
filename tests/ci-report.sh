@@ -23,7 +23,14 @@ for cid in $(docker compose ps -aq); do
   read -r svc state health restarts < <(docker inspect "$cid" --format \
     '{{index .Config.Labels "com.docker.compose.service"}} {{.State.Status}} {{if .State.Health}}{{.State.Health.Status}}{{else}}-{{end}} {{.RestartCount}}')
   if [ "$state" != running ] || [ "$health" = unhealthy ] || [ "${restarts:-0}" -gt 0 ]; then
-    docker logs --tail 40 "$cid" > "/tmp/ci-$svc.log" 2>&1
+    {
+      if [ "$health" != - ]; then
+        echo "--- last healthcheck output:"
+        docker inspect "$cid" --format '{{range .State.Health.Log}}exit={{.ExitCode}} {{.Output}}{{end}}' | tail -c 800
+        echo "--- log:"
+      fi
+      docker logs --tail 25 "$cid" 2>&1
+    } > "/tmp/ci-$svc.log"
     annotate "$svc: $state/$health, restarts=$restarts" "/tmp/ci-$svc.log"
     n=$((n + 1))
   fi

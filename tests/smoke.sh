@@ -110,8 +110,13 @@ upload=$(jq -r '.UPLOAD_URL // empty' <<<"$CONFIG")
 [[ "$upload" == /* || "$upload" == "$HULY_URL"* ]] || fail "config.json: UPLOAD_URL=$upload is not public"
 ok "UPLOAD_URL=$upload"
 
-retry 120 curl -fsS --max-time 10 -o /dev/null "$ACCOUNTS_URL/api/v1/statistics" \
-  || fail "account service is not reachable at $ACCOUNTS_URL"
+# any JSON-RPC answer (even an error for an unknown method) means nginx reaches
+# the account service; 502/504 or HTML would mean a broken proxy route
+account_answers() {
+  curl -sS --max-time 10 -X POST "$ACCOUNTS_URL" -H 'Content-Type: application/json' \
+    -d '{"method":"smokePing","params":{}}' 2>/dev/null | jq -e 'has("error") or has("result")' >/dev/null
+}
+retry 120 account_answers || fail "account service does not answer JSON-RPC at $ACCOUNTS_URL"
 ok "account service responds through the proxy"
 
 # ---------------------------------------------------------------------------

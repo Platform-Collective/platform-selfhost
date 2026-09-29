@@ -38,9 +38,20 @@ if [ -z "${HULY_URL:-}" ]; then
 fi
 HULY_URL=${HULY_URL%/}
 
-step() { echo -e "\n\033[1;34m==> $*\033[0m"; }
+step() { rm -f /tmp/smoke-last-rpc.log; echo -e "\n\033[1;34m==> $*\033[0m"; }
 ok()   { echo -e "    \033[32mok\033[0m  $*"; }
-fail() { echo -e "    \033[31mFAIL\033[0m $*" >&2; exit 1; }
+fail() {
+  echo -e "    \033[31mFAIL\033[0m $*" >&2
+  if [ -n "${GITHUB_ACTIONS:-}" ]; then
+    # annotation: visible on the PR without opening the log; attach extra context if any
+    local msg="$*" ctx="" f=${FAIL_CONTEXT:-/tmp/smoke-last-rpc.log}
+    [ -f "$f" ] && ctx=$(tail -c 3000 "$f")
+    [ -n "$ctx" ] && msg="$msg"$'\n'"$ctx"
+    msg=${msg//'%'/'%25'}; msg=${msg//$'\r'/}; msg=${msg//$'\n'/'%0A'}
+    echo "::error title=smoke.sh ($MODE)::$msg"
+  fi
+  exit 1
+}
 
 # retry <seconds> <command...>: retry every 5s until the command succeeds
 retry() {
@@ -61,6 +72,7 @@ rpc() {
     -d "{\"method\":\"$method\",\"params\":$params}") || return 1
   if ! jq -e '.error == null and .result != null' >/dev/null 2>&1 <<<"$resp"; then
     echo "    $method -> $resp" >&2
+    echo "$method -> $resp" > /tmp/smoke-last-rpc.log
     return 1
   fi
   jq -c .result <<<"$resp"
@@ -72,7 +84,7 @@ echo "Target: $HULY_URL (mode: $MODE)"
 step "Containers are up (healthcheck.sh)"
 if ! retry "$TIMEOUT" ./healthcheck.sh >/tmp/smoke-health.log 2>&1; then
   cat /tmp/smoke-health.log
-  fail "services did not become healthy within ${TIMEOUT}s"
+  FAIL_CONTEXT=/tmp/smoke-health.log fail "services did not become healthy within ${TIMEOUT}s"
 fi
 ok "all services running"
 

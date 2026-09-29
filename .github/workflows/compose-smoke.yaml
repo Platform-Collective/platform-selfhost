@@ -81,6 +81,10 @@ jobs:
           docker compose restart
           tests/smoke.sh --verify
 
+      - name: Report failure
+        if: failure()
+        run: tests/ci-report.sh
+
       - name: Collect logs
         if: always()
         run: |
@@ -184,6 +188,11 @@ jobs:
         if: steps.v.outputs.from != ''
         working-directory: new
         run: tests/smoke.sh
+
+      - name: Report failure
+        if: failure() && steps.v.outputs.from != ''
+        working-directory: new
+        run: tests/ci-report.sh
 
       - name: Collect logs
         if: always() && steps.v.outputs.from != ''

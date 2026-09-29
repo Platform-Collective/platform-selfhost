@@ -190,7 +190,7 @@ services:
       - TRANSACTOR_URL=ws://transactor:3333;ws${SECURE:+s}://${HOST_ADDRESS}/_transactor
       - STORAGE_CONFIG=minio|minio?accessKey=minioadmin&secretKey=minioadmin
       - FRONT_URL=http${SECURE:+s}://${HOST_ADDRESS}
-      - STATS_URL=http${SECURE:+s}://${HOST_ADDRESS}/_stats
+      - STATS_URL=http://stats:4900
       - MODEL_ENABLED=*
       - ACCOUNTS_URL=http${SECURE:+s}://${HOST_ADDRESS}/_accounts
       - ACCOUNT_PORT=3000
@@ -228,7 +228,9 @@ services:
       - CALENDAR_URL=http${SECURE:+s}://${HOST_ADDRESS}/_calendar
       - GMAIL_URL=http${SECURE:+s}://${HOST_ADDRESS}/_gmail
       - TELEGRAM_URL=http${SECURE:+s}://${HOST_ADDRESS}/_telegram
-      - STATS_URL=http${SECURE:+s}://${HOST_ADDRESS}/_stats
+      # front: STATS_URL is where the server itself reports, STATS_API is what the browser gets
+      - STATS_URL=http://stats:4900
+      - STATS_API=http${SECURE:+s}://${HOST_ADDRESS}/_stats
       - UPLOAD_URL=/files
       - ELASTIC_URL=http://elastic:9200
       - COLLABORATOR_URL=ws${SECURE:+s}://${HOST_ADDRESS}/_collaborator

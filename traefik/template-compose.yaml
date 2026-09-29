@@ -228,7 +228,8 @@ services:
       CALENDAR_URL: https://${SERVER_ADDRESS}:8095
       GMAIL_URL: https://${SERVER_ADDRESS}:8088
       TELEGRAM_URL: https://${SERVER_ADDRESS}:8086
-      STATS_URL: https://${SERVER_ADDRESS}/stats
+      # STATS_URL (internal, from common-env) is where the server reports; STATS_API is what the browser gets
+      STATS_API: https://${SERVER_ADDRESS}/stats
       UPLOAD_URL: /files
       ELASTIC_URL: http://elastic:9200
       COLLABORATOR_URL: wss://${SERVER_ADDRESS}/ws/collaborator

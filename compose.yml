@@ -14,9 +14,9 @@ services:
     image: cockroachdb/cockroach:latest-v24.2
     command: start-single-node --accept-sql-without-tls
     environment:
-      - COCKROACH_DATABASE=${CR_DATABASE}
-      - COCKROACH_USER=${CR_USERNAME}
-      - COCKROACH_PASSWORD=${CR_USER_PASSWORD}
+      - COCKROACH_DATABASE=${CR_DATABASE:-}
+      - COCKROACH_USER=${CR_USERNAME:-}
+      - COCKROACH_PASSWORD=${CR_USER_PASSWORD:-}
     volumes:
       - ${VOLUME_CR_DATA_PATH:-cr_data}:/cockroach/cockroach-data
       - ${VOLUME_CR_CERTS_PATH:-cr_certs}:/cockroach/certs
@@ -160,7 +160,7 @@ services:
     environment:
       - SERVER_PORT=3333
       - SERVER_SECRET=${SECRET}
-      - DB_URL=${CR_DB_URL}
+      - DB_URL=${CR_DB_URL:-}
       - STORAGE_CONFIG=minio|minio?accessKey=minioadmin&secretKey=minioadmin
       - FRONT_URL=http${SECURE:+s}://${HOST_ADDRESS}
       - ACCOUNTS_URL=http://account:3000
@@ -189,7 +189,7 @@ services:
     environment:
       - SERVER_PORT=3000
       - SERVER_SECRET=${SECRET}
-      - DB_URL=${CR_DB_URL}
+      - DB_URL=${CR_DB_URL:-}
       - TRANSACTOR_URL=ws://transactor:3333;ws${SECURE:+s}://${HOST_ADDRESS}/_transactor
       - STORAGE_CONFIG=minio|minio?accessKey=minioadmin&secretKey=minioadmin
       - FRONT_URL=http${SECURE:+s}://${HOST_ADDRESS}
@@ -206,14 +206,14 @@ services:
     image: platformcollective/workspace:${HULY_VERSION}
     environment:
       - SERVER_SECRET=${SECRET}
-      - DB_URL=${CR_DB_URL}
+      - DB_URL=${CR_DB_URL:-}
       - TRANSACTOR_URL=ws://transactor:3333;ws${SECURE:+s}://${HOST_ADDRESS}/_transactor
       - STORAGE_CONFIG=minio|minio?accessKey=minioadmin&secretKey=minioadmin
       - MODEL_ENABLED=*
       - ACCOUNTS_URL=http://account:3000
       - STATS_URL=http://stats:4900
       - QUEUE_CONFIG=redpanda:9092
-      - ACCOUNTS_DB_URL=${CR_DB_URL}
+      - ACCOUNTS_DB_URL=${CR_DB_URL:-}
     # - INIT_REPO_DIR=/no-init-scripts
     restart: unless-stopped
     networks:
@@ -252,7 +252,7 @@ services:
     image: platformcollective/fulltext:${HULY_VERSION}
     environment:
       - SERVER_SECRET=${SECRET}
-      - DB_URL=${CR_DB_URL}
+      - DB_URL=${CR_DB_URL:-}
       - FULLTEXT_DB_URL=http://elastic:9200
       - ELASTIC_INDEX_NAME=huly_storage_index
       - STORAGE_CONFIG=minio|minio?accessKey=minioadmin&secretKey=minioadmin
@@ -281,7 +281,7 @@ services:
     ports:
       - 8094:8094
     environment:
-      - HULY_DB_CONNECTION=${CR_DB_URL}
+      - HULY_DB_CONNECTION=${CR_DB_URL:-}
       - HULY_TOKEN_SECRET=${SECRET}
     restart: unless-stopped
     networks:

@@ -3,7 +3,7 @@
 # backup.sh - Offline backup of a Docker Compose deployment.
 #
 # Creates a timestamped, self-contained backup of everything needed to restore the
-# deployment: the CockroachDB data, the MinIO file store, and the local config and
+# deployment: the database (CockroachDB or PostgreSQL), the MinIO file store, and the local config and
 # secret files. The stack is stopped only while the volumes are archived so the copy
 # is crash-consistent, then restarted immediately. This is the recommended backup to
 # take before a version upgrade (see MIGRATION.md).
@@ -114,6 +114,7 @@ DEST_ABS=$(cd "$DEST" && pwd)
 
 echo -e "\033[1;34mResolving data volumes...\033[0m"
 CR_SRC=$(mount_source cockroach /cockroach/cockroach-data)
+PG_SRC=$(mount_source postgres /var/lib/postgresql)
 FILES_SRC=$(mount_source minio /data)
 MONGO_SRC=$(mount_source mongodb /data/db)
 ELASTIC_SRC=$(mount_source elastic /usr/share/elasticsearch/data)
@@ -124,7 +125,11 @@ $COMPOSE stop
 STOPPED=true
 
 echo "Archiving data volumes..."
-archive "$CR_SRC" cockroach.tar.gz "CockroachDB"
+[ -n "$CR_SRC" ] && archive "$CR_SRC" cockroach.tar.gz "CockroachDB"
+[ -n "$PG_SRC" ] && archive "$PG_SRC" postgres.tar.gz "PostgreSQL"
+if [ -z "$CR_SRC" ] && [ -z "$PG_SRC" ]; then
+    echo -e "  \033[33mWARNING: no database volume found (neither CockroachDB nor PostgreSQL)\033[0m"
+fi
 archive "$FILES_SRC" files.tar.gz "MinIO files"
 [ -n "$MONGO_SRC" ] && archive "$MONGO_SRC" mongodb.tar.gz "MongoDB (legacy)"
 if [ "$FULL" = true ]; then
@@ -137,7 +142,7 @@ fi
 restart_stack
 
 echo "Copying config and secret files..."
-for f in .env huly.conf huly_v7.conf nginx.conf .huly.nginx .huly.secret .cr.secret .rp.secret; do
+for f in .env huly.conf huly_v7.conf nginx.conf .huly.nginx .huly.secret .cr.secret .pg.secret .rp.secret; do
     [ -f "$f" ] && cp -p "$f" "$DEST/config/"
 done
 [ -d traefik ] && cp -rp traefik "$DEST/config/"
@@ -146,6 +151,7 @@ done
     echo "created: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
     echo "full: $FULL"
     grep -hE '^HULY_VERSION=' .env huly.conf huly_v7.conf 2>/dev/null | tail -1 || true
+    grep -hE '^DB_TYPE=' .env huly.conf huly_v7.conf 2>/dev/null | tail -1 || true
     echo "archives:"
     for a in "$DEST"/*.tar.gz; do
         [ -f "$a" ] && echo "  - $(basename "$a")"

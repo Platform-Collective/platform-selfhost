@@ -1,9 +1,11 @@
 name: compose-smoke
 
 # Checks that the Docker Compose self-host setup actually works:
-#   fresh-install - setup.sh --quick, then API smoke (tests/smoke.sh) and a browser smoke (tests/ui)
+#   fresh-install - setup.sh --quick, then API smoke (tests/smoke.sh) and a browser smoke (tests/ui),
+#                   once per supported database (CockroachDB and PostgreSQL)
 #   upgrade       - install the previous version, create data, upgrade the way a user
 #                   does (new config + setup.sh), check the data is still there
+#                   (CockroachDB: the database every existing install runs)
 #
 # Triggers:
 #   pull_request / push to main       - version from .template.huly.conf; upgrade runs
@@ -43,8 +45,13 @@ env:
 
 jobs:
   fresh-install:
+    name: fresh-install (${{ matrix.db }})
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        db: [cockroach, postgres]
     steps:
       - uses: actions/checkout@v4
 
@@ -57,10 +64,10 @@ jobs:
         if: env.TARGET_VERSION != ''
         run: sed -i "s/^HULY_VERSION=.*/HULY_VERSION=${TARGET_VERSION}/" .template.huly.conf
 
-      - name: Install (setup.sh --quick)
+      - name: Install (setup.sh --quick --db ${{ matrix.db }})
         run: |
           grep '^HULY_VERSION=' .template.huly.conf
-          ./setup.sh --quick < /dev/null
+          ./setup.sh --quick --db ${{ matrix.db }} < /dev/null
 
       - name: API smoke test
         run: tests/smoke.sh
@@ -90,6 +97,14 @@ jobs:
           echo "IPs: $before -> account=$(ip account) transactor=$(ip transactor)"
           tests/smoke.sh --verify
 
+      - name: Backup and restore keep the data
+        run: |
+          ./backup.sh
+          backup=$(ls -d backups/huly-backup-* | tail -1)
+          grep -q "${{ matrix.db }}.tar.gz" "$backup/manifest.txt"
+          ./restore.sh "$backup" --yes
+          tests/smoke.sh --verify
+
       - name: Report failure
         if: failure()
         run: tests/ci-report.sh
@@ -106,7 +121,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: fresh-install-logs
+          name: fresh-install-${{ matrix.db }}-logs
           path: |
             logs/
             tests/ui/playwright-report/

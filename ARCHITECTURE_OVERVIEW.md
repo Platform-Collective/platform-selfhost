@@ -22,7 +22,7 @@ The self-hosted deployment consists of 14 services working together. This sectio
 | Service | Description |
 |---------|-------------|
 | **nginx** | Reverse proxy and SSL termination. Routes external requests to internal services, handles HTTPS certificates, and provides a single entry point for all client connections. |
-| **cockroach** | CockroachDB - the primary database. Stores all application data including users, workspaces, documents, and metadata. Provides ACID transactions and horizontal scalability. |
+| **cockroach** / **postgres** | The primary database: CockroachDB (default) or PostgreSQL (`setup.sh --db postgres`), chosen at install time. Stores all application data including users, workspaces, documents, and metadata. Provides ACID transactions and horizontal scalability. |
 | **elastic** | Elasticsearch search engine. Stores and indexes document content for fast full-text search queries. Managed by the fulltext service. |
 | **minio** | S3-compatible object storage, powered by [Silo](https://github.com/pgsty/silo) (a MinIO-compatible fork; the upstream MinIO community edition is no longer maintained). The service keeps the `minio` name for compatibility. Stores all binary files including attachments, images, and document blobs. Accessed directly by nginx for file downloads. |
 | **redpanda** | Kafka-compatible event streaming platform. Provides reliable message delivery between services for asynchronous processing (e.g., search indexing after document changes). |
@@ -32,7 +32,7 @@ The self-hosted deployment consists of 14 services working together. This sectio
 
 - **Synchronous (HTTP/WebSocket)**: Client ↔ Nginx ↔ Services
 - **Asynchronous (Events)**: Transactor → Redpanda → Fulltext
-- **Direct Database**: Services → CockroachDB
+- **Direct Database**: Services → CockroachDB or PostgreSQL
 - **File Storage**: Services → MinIO (via S3 API)
 
 ---
@@ -300,7 +300,7 @@ sequenceDiagram
 - `QUEUE_CONFIG`: `redpanda:9092`
 
 ### Database Configuration
-- `DB_URL`: CockroachDB connection string (e.g., `postgresql://user:pass@cockroach:26257/huly`)
+- `DB_URL`: database connection string: `CR_DB_URL` for CockroachDB (e.g., `postgres://user:pass@cockroach:26257/defaultdb`) or `PG_DB_URL` for PostgreSQL (e.g., `postgres://user:pass@postgres:5432/huly`)
 - `FULLTEXT_DB_URL`: `http://elastic:9200`
 
 ### Service URLs (Internal)

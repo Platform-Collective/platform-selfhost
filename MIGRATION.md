@@ -13,6 +13,16 @@ WARNING: if you are migrating from v6 see [v0.7.204](#v07204) for details.
 > [!CAUTION]
 > Do not upgrade directly from v6 to v7. Direct upgrades will lock your deployment with MongoDB-specific data, making the future migration significantly more complex. Follow the migration instructions below instead.
 
+### PostgreSQL as an alternative to CockroachDB
+
+New installs can now run on PostgreSQL instead of CockroachDB: `./setup.sh --db postgres`
+(or answer `postgres` when `setup.sh` asks). CockroachDB stays the default and remains
+fully supported.
+
+**Existing deployments: no changes required.** A config without `DB_TYPE` is treated as
+CockroachDB, and re-running `setup.sh` keeps it that way. `setup.sh` refuses to switch an
+existing install to another database, because data is not migrated between them.
+
 ### Object storage: MinIO → Silo
 
 The upstream MinIO community edition is no longer maintained, so the `minio` service now runs [`pgsty/silo`](https://github.com/pgsty/silo) — a community-maintained MinIO fork that keeps the same S3 API, on-disk format and `MINIO_*` variables.

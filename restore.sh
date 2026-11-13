@@ -66,12 +66,6 @@ if [ "$ASSUME_YES" != true ]; then
     esac
 fi
 
-# Ensure containers and volumes exist, then stop everything so the volumes are safe
-# to overwrite (never write to a volume while its container is running).
-echo "Preparing stack (creating containers, stopping the stack)..."
-$COMPOSE up --no-start
-$COMPOSE stop
-
 source_on() {
     # $1 = container id, $2 = mount destination
     docker inspect "$1" --format \
@@ -109,8 +103,36 @@ restore_vol() {
         sh -c 'rm -rf /data/* /data/.[!.]* /data/..?* 2>/dev/null; tar xzf "/backup/'"$2"'" -C /data'
 }
 
+# Ensure containers and volumes exist so their mounts can be resolved.
+echo "Preparing stack (creating containers)..."
+$COMPOSE up --no-start
+
+# The database archive must land in the database this deployment runs. A CockroachDB
+# backup cannot be restored into a PostgreSQL deployment (or the other way around):
+# refuse before touching any volume instead of silently skipping the database.
+db_mount() {
+    case $1 in
+        cockroach) mount_source cockroach /cockroach/cockroach-data ;;
+        postgres) mount_source postgres /var/lib/postgresql ;;
+    esac
+}
+for db in cockroach postgres; do
+    if [ -f "$SRC_ABS/$db.tar.gz" ] && [ -z "$(db_mount $db)" ]; then
+        echo -e "\033[1;31mThe backup contains a $db database, but this deployment does not run $db.\033[0m" >&2
+        echo "Set up the deployment with the same database first (./setup.sh --db $db, or copy" >&2
+        echo "$RESTORE_DIR/config/huly_v7.conf here), then run restore again." >&2
+        exit 1
+    fi
+done
+
+# Stop everything so the volumes are safe to overwrite (never write to a volume
+# while its container is running).
+echo "Stopping the stack..."
+$COMPOSE stop
+
 echo "Restoring data volumes..."
-restore_vol "$(mount_source cockroach /cockroach/cockroach-data)" cockroach.tar.gz
+restore_vol "$(db_mount cockroach)" cockroach.tar.gz
+restore_vol "$(db_mount postgres)" postgres.tar.gz
 restore_vol "$(mount_source minio /data)" files.tar.gz
 restore_vol "$(mount_source mongodb /data/db)" mongodb.tar.gz
 restore_vol "$(mount_source elastic /usr/share/elasticsearch/data)" elastic.tar.gz

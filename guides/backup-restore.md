@@ -11,9 +11,9 @@ Kubernetes, the Helm chart ships scheduled backups under
 
 | Data | Source | Included by default |
 |---|---|---|
-| Database | CockroachDB volume (`cr_data`) | Yes |
+| Database | CockroachDB volume (`cr_data`) or PostgreSQL volume (`pg_data`), whichever the deployment runs | Yes |
 | Files / attachments | MinIO volume (`files`) | Yes |
-| Config and secrets | `.env`, `huly*.conf`, `nginx.conf`, `.huly.nginx`, `.huly.secret`, `.cr.secret`, `.rp.secret`, `traefik/` | Yes |
+| Config and secrets | `.env`, `huly*.conf`, `nginx.conf`, `.huly.nginx`, `.huly.secret`, `.cr.secret` / `.pg.secret`, `.rp.secret`, `traefik/` | Yes |
 | Legacy database | MongoDB volume (`mongodb`), if present | Yes, when detected |
 | Search index | Elasticsearch volume (`elastic`) | No - rebuilt automatically |
 | Event log | Redpanda volume (`redpanda`) | No - transient |
@@ -43,7 +43,7 @@ Each backup is a self-contained directory:
 
 ```
 backups/huly-backup-20260630-141500/
-  cockroach.tar.gz
+  cockroach.tar.gz       # or postgres.tar.gz on a PostgreSQL deployment
   files.tar.gz
   config/
     .env
@@ -88,6 +88,12 @@ a bucket lifecycle policy (expire objects after N days) rather than pruning by h
 data back into them, restores the config files, and starts the stack. The search
 index rebuilds automatically over the first few minutes after start.
 
+A backup restores only into a deployment that runs the same database. If the backup
+holds a PostgreSQL database and the deployment runs CockroachDB (or the other way
+around), `restore.sh` stops before changing anything. To restore into a fresh directory,
+run `./setup.sh --db <cockroach|postgres>` with the database from `manifest.txt` first,
+or copy `config/huly_v7.conf` from the backup into the directory.
+
 ## Verifying a backup
 
 A backup you have never restored is a guess, not a backup. Periodically:
@@ -101,5 +107,5 @@ A backup you have never restored is a guess, not a backup. Periodically:
 - Run these scripts from the repository root, next to `compose.yml`.
 - They use only `docker`, `docker compose`, and a temporary `alpine` container, so
   there is nothing extra to install.
-- For zero-downtime logical backups, a future enhancement could mirror the hot
-  CockroachDB dump and `rclone` file sync already used by the Helm CronJobs.
+- For zero-downtime logical backups, a future enhancement could use `pg_dump` (on
+  PostgreSQL) or mirror the hot CockroachDB dump and `rclone` file sync already used by the Helm CronJobs.

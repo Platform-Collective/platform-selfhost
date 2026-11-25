@@ -140,6 +140,8 @@ class MigrationTest(unittest.TestCase):
         override = self.staged("compose.override.yml")
         self.assertNotIn("redpanda", override)
         self.assertNotIn("minio:", override)
+        self.assertNotIn("account:", override)
+        self.assertNotIn("front:", override)
         for name, s in svc.items():
             self.assertFalse(s.get("image", "").startswith("hardcoreeng/"), name)
         self.assertIn("SMTP_PASSWORD=mailpit-accepts-anything", self.staged("custom.conf"))

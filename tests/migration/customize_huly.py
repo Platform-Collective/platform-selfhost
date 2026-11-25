@@ -9,9 +9,10 @@ end-to-end CI job (which really runs the result, so everything here must work).
   - a variable for the mail service in huly_v7.conf (not part of the template)
   - .huly.nginx: a bigger upload limit and a location of your own (/_mailpit), and
     nginx made to start after mailpit (a static proxy_pass needs the host at startup)
-  - upstream's broken redpanda and minio healthchecks fixed the way this repository fixed
-    them (as anyone running a health check had to); identical to ours, so nothing is
-    carried over for them
+  - upstream bugs fixed the way this repository fixed them (anyone who looked at the
+    health checks and logs had to): the redpanda and minio healthchecks, and account/front
+    reporting to stats through the public URL, which is unreachable from inside the
+    containers. Identical to ours, so nothing is carried over for them
 
 Usage: customize_huly.py HULY_DIR
 """
@@ -56,6 +57,11 @@ def main(huly_dir: str) -> None:
         "test: ['CMD', 'rpk', 'cluster', 'info', '-X', 'user=${REDPANDA_ADMIN_USER}', '-X', 'pass=${REDPANDA_ADMIN_PWD}']",
         "test: ['CMD', 'rpk', 'cluster', 'info']", 1)
     compose = compose.replace("test: ['CMD', 'mc', 'ready', 'local']", "test: ['CMD', 'silo', 'healthcheck', 'ready']", 1)
+    public_stats = "      - STATS_URL=http${SECURE:+s}://${HOST_ADDRESS}/_stats\n"
+    compose = compose.replace(public_stats, "      - STATS_URL=http://stats:4900\n", 1)  # account
+    compose = compose.replace(public_stats, "      - STATS_URL=http://stats:4900\n"
+                              "      - STATS_API=http${SECURE:+s}://${HOST_ADDRESS}/_stats\n", 1)  # front
+    assert public_stats not in compose
     assert "'mc', 'ready'" not in compose and "pass=${REDPANDA_ADMIN_PWD}" not in compose
     assert "depends_on:\n      - mailpit" in compose and "mailpit" in compose and "MIGRATION_TEST_FLAG" in compose and "mem_limit" in compose
     open(compose_path, "w").write(compose)

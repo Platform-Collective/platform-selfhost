@@ -119,8 +119,8 @@ jobs:
           python3 ../new/tests/migration/customize_huly.py .
           docker compose up -d
           docker compose restart nginx
-          # the smoke tests always come from this repository
-          rm -rf tests && cp -r ../new/tests .
+          # the smoke tests always come from this repository (with the health check they use)
+          rm -rf tests && cp -r ../new/tests . && cp ../new/healthcheck.sh .
 
       - uses: actions/setup-node@v4
         with:

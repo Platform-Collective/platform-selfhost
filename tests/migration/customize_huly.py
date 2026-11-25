@@ -9,6 +9,9 @@ end-to-end CI job (which really runs the result, so everything here must work).
   - a variable for the mail service in huly_v7.conf (not part of the template)
   - .huly.nginx: a bigger upload limit and a location of your own (/_mailpit), and
     nginx made to start after mailpit (a static proxy_pass needs the host at startup)
+  - upstream's broken redpanda and minio healthchecks fixed the way this repository fixed
+    them (as anyone running a health check had to); identical to ours, so nothing is
+    carried over for them
 
 Usage: customize_huly.py HULY_DIR
 """
@@ -49,6 +52,11 @@ def main(huly_dir: str) -> None:
     compose = compose.replace(
         "      - FULLTEXT_URL=http://fulltext:4700\n",
         "      - FULLTEXT_URL=http://fulltext:4700\n      - MIGRATION_TEST_FLAG=kept\n", 1)
+    compose = compose.replace(
+        "test: ['CMD', 'rpk', 'cluster', 'info', '-X', 'user=${REDPANDA_ADMIN_USER}', '-X', 'pass=${REDPANDA_ADMIN_PWD}']",
+        "test: ['CMD', 'rpk', 'cluster', 'info']", 1)
+    compose = compose.replace("test: ['CMD', 'mc', 'ready', 'local']", "test: ['CMD', 'silo', 'healthcheck', 'ready']", 1)
+    assert "'mc', 'ready'" not in compose and "pass=${REDPANDA_ADMIN_PWD}" not in compose
     assert "depends_on:\n      - mailpit" in compose and "mailpit" in compose and "MIGRATION_TEST_FLAG" in compose and "mem_limit" in compose
     open(compose_path, "w").write(compose)
 

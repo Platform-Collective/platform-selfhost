@@ -136,6 +136,10 @@ class MigrationTest(unittest.TestCase):
         self.assertEqual(env.get("FRONT_URL"), "http${SECURE:+s}://${HOST_ADDRESS}")
         self.assertIn("mem_limit", svc["transactor"])
         self.assertIn("mailpit", svc["nginx"]["depends_on"])
+        # changes identical to ours are not carried over
+        override = self.staged("compose.override.yml")
+        self.assertNotIn("redpanda", override)
+        self.assertNotIn("minio:", override)
         for name, s in svc.items():
             self.assertFalse(s.get("image", "").startswith("hardcoreeng/"), name)
         self.assertIn("SMTP_PASSWORD=mailpit-accepts-anything", self.staged("custom.conf"))

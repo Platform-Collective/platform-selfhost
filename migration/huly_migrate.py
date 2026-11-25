@@ -272,9 +272,9 @@ class Override:
 
 
 def three_way(b: Any, u: Any, o: Any) -> Tuple[str, Any]:
-    if u == b:
+    if u == b or u == o:  # unchanged, or changed exactly as we did
         return "ours", o
-    if o == b or o == u:
+    if o == b:
         return "theirs", u
     return "conflict", u
 

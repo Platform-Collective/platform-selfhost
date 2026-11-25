@@ -91,7 +91,16 @@ ok "all services running"
 # ---------------------------------------------------------------------------
 step "Front and public config"
 retry 120 curl -fsS --max-time 10 -o /dev/null "$HULY_URL/" || fail "GET $HULY_URL/ did not return 2xx"
-curl -fsS "$HULY_URL/" | grep -qi '<html' || fail "front did not return HTML"
+if ! curl -fsS "$HULY_URL/" | grep -qi '<html'; then
+  for i in 1 2; do
+    echo "--- DEBUG via nginx #$i:"; curl -sS -D - -o /tmp/body "$HULY_URL/"; echo "body bytes: $(wc -c </tmp/body)"; head -c 1500 /tmp/body | cat -v; echo
+    sleep 5
+  done
+  echo "--- DEBUG front direct:"; docker compose exec -T front sh -c 'ls -la /app/dist | head -40; ls /app/dist | wc -l; head -c 800 /app/dist/index.html; echo; node -e "fetch(\"http://localhost:8080/\").then(async r=>{console.log(r.status,[...r.headers]);const t=await r.text();console.log(t.length,t.slice(0,600))})"' 2>&1 | cat -v
+  echo "--- DEBUG front logs:"; docker compose logs --no-color --tail 60 front 2>&1 | cut -c1-300
+  echo "--- DEBUG nginx logs:"; docker compose logs --no-color --tail 20 nginx 2>&1 | cut -c1-300
+  fail "front did not return HTML"
+fi
 ok "GET / returns HTML"
 
 CONFIG=$(curl -fsS "$HULY_URL/config.json") || fail "GET /config.json failed"

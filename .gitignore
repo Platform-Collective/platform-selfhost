@@ -4,6 +4,8 @@ nginx.conf
 nginx.conf.bak
 huly.conf
 huly_v7.conf
+custom.conf
+compose.override.yml
 .huly.secret
 .cr.secret
 .pg.secret
@@ -19,3 +21,9 @@ tests/ui/node_modules/
 tests/ui/playwright-report/
 tests/ui/test-results/
 logs/
+
+# migrate-from-huly.sh
+.migration/
+migration-report.md
+.huly.nginx.huly-orig
+__pycache__/

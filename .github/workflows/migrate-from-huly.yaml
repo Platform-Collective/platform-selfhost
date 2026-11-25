@@ -1,0 +1,216 @@
+name: migrate-from-huly
+
+# Checks migrate-from-huly.sh, the in-place move of an upstream Huly install
+# (hcengineering/huly-selfhost) to this repository:
+#   unit    - shellcheck + tests/migration (planner, merges, refusals; no Docker daemon)
+#   images  - every hardcoreeng/* image upstream mentions has a mapping, and every
+#             platformcollective/* image in the map is published for the version under test
+#   e2e     - install upstream Huly with typical changes (extra services, env, nginx,
+#             custom variables), create data, migrate, check the data and the changes
+#             survived, then roll back to Huly from the backup
+#
+# Upstream is frozen; HULY_SELFHOST_REF pins the commit users migrate from.
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event.client_payload.version || inputs.huly_version || '' }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    paths:
+      - migrate-from-huly.sh
+      - migration/**
+      - tests/migration/**
+      - tests/smoke.sh
+      - compose.yml
+      - .huly.nginx
+      - .template.*
+      - setup.sh
+      - backup.sh
+      - restore.sh
+      - .github/workflows/migrate-from-huly.yaml
+  push:
+    branches: [main]
+    paths:
+      - migrate-from-huly.sh
+      - migration/**
+      - tests/migration/**
+      - compose.yml
+      - .huly.nginx
+      - .template.*
+      - setup.sh
+      - backup.sh
+      - restore.sh
+      - .github/workflows/migrate-from-huly.yaml
+  schedule:
+    - cron: '17 5 * * 1'
+  workflow_dispatch:
+    inputs:
+      huly_version:
+        description: 'Platform Collective version to migrate to; empty = the one in .template.huly.conf'
+        required: false
+  repository_dispatch:
+    types: [platform-release]
+
+permissions:
+  contents: read
+
+env:
+  HULY_SELFHOST_REF: ca3808a57c83518b971343df7d073753f38796ed
+  HULY_URL: http://localhost:8087
+  TARGET_VERSION: ${{ github.event.client_payload.version || inputs.huly_version || '' }}
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: shellcheck
+        run: shellcheck migrate-from-huly.sh tests/migration/check-images.sh
+      - name: Planner and merge tests
+        run: python3 -m unittest discover -s tests/migration -v
+      - name: Planner still runs on Python 3.8
+        # the oldest Python on supported servers; setup-python has no 3.8 for current runners
+        run: |
+          docker run --rm -v "$PWD/migration:/m:ro" python:3.8-slim \
+            python -c "import sys; sys.path.insert(0, '/m'); import huly_migrate"
+
+  images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: hcengineering/huly-selfhost
+          ref: ${{ env.HULY_SELFHOST_REF }}
+          path: .upstream
+      - name: Image map covers upstream and is published
+        run: |
+          version=${TARGET_VERSION:-$(sed -n 's/^HULY_VERSION=//p' .template.huly.conf)}
+          tests/migration/check-images.sh .upstream "$version"
+
+  e2e:
+    needs: unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: new
+      - uses: actions/checkout@v4
+        with:
+          repository: hcengineering/huly-selfhost
+          ref: ${{ env.HULY_SELFHOST_REF }}
+          path: huly
+
+      - name: Free disk space
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+
+      - name: Pin version under test
+        if: env.TARGET_VERSION != ''
+        run: sed -i "s/^HULY_VERSION=.*/HULY_VERSION=${TARGET_VERSION}/" new/.template.huly.conf
+
+      - name: Install upstream Huly with typical changes
+        working-directory: huly
+        run: |
+          ./setup.sh --quick < /dev/null
+          python3 ../new/tests/migration/customize_huly.py .
+          docker compose up -d
+          docker compose restart nginx
+          # the smoke tests always come from this repository (with the health check they use)
+          rm -rf tests && cp -r ../new/tests . && cp ../new/healthcheck.sh .
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Create data on Huly
+        working-directory: huly
+        run: |
+          tests/smoke.sh
+          curl -fsS -o /dev/null "$HULY_URL/_mailpit/"
+          cd tests/ui
+          npm ci
+          npx playwright install --with-deps chromium
+          npx playwright test
+
+      - name: Dry run changes nothing
+        run: |
+          snapshot() { (cd "$1" && find . -path ./tests -prune -o -path ./.git -prune -o -path ./.migration -prune -o -type f -print0 | sort -z | xargs -0 sha256sum); }
+          snapshot huly > /tmp/huly.before
+          snapshot new > /tmp/new.before
+          new/migrate-from-huly.sh "$PWD/huly" --dry-run
+          snapshot huly | diff /tmp/huly.before -
+          snapshot new | diff /tmp/new.before -
+          docker compose --project-directory huly ps --format '{{.Image}}' | grep -q '^hardcoreeng/'
+
+      - name: Migrate
+        run: |
+          cp huly/tests/.smoke-state huly/tests/.smoke-ui-state new/tests/
+          new/migrate-from-huly.sh "$PWD/huly" --yes
+          cat new/migration-report.md
+
+      - name: Data survived
+        working-directory: new
+        run: |
+          tests/smoke.sh --verify
+          cd tests/ui
+          npm ci
+          SMOKE_MODE=verify npx playwright test
+
+      - name: Changes survived, images switched
+        working-directory: new
+        run: |
+          set -x
+          if docker compose ps --format '{{.Service}} {{.Image}}' | grep 'hardcoreeng/'; then exit 1; fi
+          docker compose ps --format '{{.Service}} {{.Image}}' | grep -q '^mail platformcollective/mail:'
+          docker compose ps --status running --format '{{.Service}}' | grep -qx mailpit
+          [ "$(docker compose exec -T transactor printenv MIGRATION_TEST_FLAG)" = kept ]
+          [ "$(docker compose exec -T mail printenv SMTP_PASSWORD)" = mailpit-accepts-anything ]
+          grep -q 'client_max_body_size 1G;' .huly.nginx
+          curl -fsS -o /dev/null "$HULY_URL/_mailpit/"
+          ./healthcheck.sh
+
+      - name: Everything still works for new users
+        working-directory: new
+        run: tests/smoke.sh
+
+      - name: Roll back to Huly from the backup
+        run: |
+          # the way migration-report.md tells users to
+          backup=$(find "$PWD/new/backups" -maxdepth 1 -type d -name 'huly-backup-*' | sort | tail -1)
+          (cd new && docker compose down)
+          cp new/restore.sh huly/
+          (cd huly && ./restore.sh "$backup" --yes)
+          docker compose --project-directory huly ps --format '{{.Image}}' | grep -q '^hardcoreeng/transactor'
+          cp new/tests/.smoke-state huly/tests/
+          huly/tests/smoke.sh --verify
+
+      - name: Report failure
+        if: failure()
+        working-directory: new
+        run: tests/ci-report.sh || true
+
+      - name: Collect logs
+        if: always()
+        run: |
+          mkdir -p logs
+          cp new/migration-report.md new/.migration/plan.md logs/ 2>/dev/null || true
+          for d in new huly; do
+            docker compose --project-directory "$d" ps -a > "logs/$d-ps.txt" 2>&1 || true
+          done
+          for s in $(docker ps -a --format '{{.Names}}'); do
+            docker logs "$s" > "logs/$s.log" 2>&1 || true
+          done
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: migrate-from-huly-logs
+          path: |
+            logs/
+            huly/tests/ui/playwright-report/
+            new/tests/ui/playwright-report/
+            new/tests/ui/test-results/

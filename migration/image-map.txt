@@ -1,0 +1,24 @@
+# Upstream Huly image -> Platform Collective image. The tag always becomes ${HULY_VERSION}.
+# CI (migrate-from-huly) checks that every hardcoreeng/* image upstream references is listed
+# here and that every image on the right is published for the current HULY_VERSION.
+hardcoreeng/account                platformcollective/account
+hardcoreeng/ai-bot                 platformcollective/ai-bot
+hardcoreeng/calendar               platformcollective/calendar
+hardcoreeng/collaborator           platformcollective/collaborator
+hardcoreeng/export                 platformcollective/export
+hardcoreeng/front                  platformcollective/front
+hardcoreeng/fulltext               platformcollective/fulltext
+hardcoreeng/github                 platformcollective/github
+hardcoreeng/gmail                  platformcollective/gmail
+hardcoreeng/hulykvs                platformcollective/hulykvs
+hardcoreeng/love                   platformcollective/love
+hardcoreeng/mail                   platformcollective/mail
+hardcoreeng/notification           platformcollective/notification
+hardcoreeng/print                  platformcollective/print
+hardcoreeng/rekoni-service         platformcollective/rekoni-service
+hardcoreeng/stats                  platformcollective/stats
+hardcoreeng/telegram-bot           platformcollective/telegram-bot
+hardcoreeng/tool                   platformcollective/tool
+hardcoreeng/transactor             platformcollective/transactor
+hardcoreeng/workspace              platformcollective/workspace
+hardcoreeng/service_hulypulse      platformcollective/hulypulse

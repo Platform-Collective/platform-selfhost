@@ -6,6 +6,11 @@ Though, some updates may require updating other configuration options. In this c
 > [!TIP]
 > If you use the desktop app, keep DESKTOP_CHANNEL in sync with the version of the containers without the "v"/"s" prefix.
 
+## Migrating from upstream Huly
+
+To move an upstream Huly v0.7 install (`hcengineering/huly-selfhost`) to this repository, use
+`./migrate-from-huly.sh` - see [guides/migrate-from-huly.md](guides/migrate-from-huly.md).
+
 ## v0.7
 
 WARNING: if you are migrating from v6 see [v0.7.204](#v07204) for details.

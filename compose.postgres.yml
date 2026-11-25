@@ -1,0 +1,69 @@
+# PostgreSQL override for compose.yml.
+#
+# Runs the platform on PostgreSQL instead of CockroachDB. setup.sh enables it for
+# installs created with `--db postgres` by writing
+#   COMPOSE_FILE=compose.yml:compose.postgres.yml
+# to the config, so plain `docker compose ...` commands pick it up automatically.
+#
+# CockroachDB deployments do not use this file and need no changes.
+# Requires Docker Compose v2.24.4 or newer (for the !override tag).
+
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      - POSTGRES_DB=${PG_DATABASE}
+      - POSTGRES_USER=${PG_USERNAME}
+      - POSTGRES_PASSWORD=${PG_USER_PASSWORD}
+    volumes:
+      # postgres:18 keeps its data under /var/lib/postgresql/<major>/docker, so the
+      # volume is mounted one level up (this also makes future major upgrades with
+      # pg_upgrade --link possible inside the same volume).
+      - ${VOLUME_PG_DATA_PATH:-pg_data}:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+    networks:
+      - huly_net
+
+  # Keep CockroachDB out of a PostgreSQL deployment: a service with a profile only
+  # starts when that profile is explicitly enabled.
+  cockroach:
+    profiles: [cockroach]
+
+  transactor:
+    depends_on: &db
+      postgres:
+        condition: service_healthy
+    environment:
+      - DB_URL=${PG_DB_URL}
+
+  account:
+    depends_on: *db
+    environment:
+      - DB_URL=${PG_DB_URL}
+
+  workspace:
+    depends_on: *db
+    environment:
+      - DB_URL=${PG_DB_URL}
+      - ACCOUNTS_DB_URL=${PG_DB_URL}
+
+  fulltext:
+    depends_on: *db
+    environment:
+      - DB_URL=${PG_DB_URL}
+
+  kvs:
+    # compose.yml makes kvs depend on cockroach; replace that dependency.
+    depends_on: !override
+      postgres:
+        condition: service_healthy
+    environment:
+      - HULY_DB_CONNECTION=${PG_DB_URL}
+
+volumes:
+  pg_data:

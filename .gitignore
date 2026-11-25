@@ -6,6 +6,7 @@ huly.conf
 huly_v7.conf
 .huly.secret
 .cr.secret
+.pg.secret
 .rp.secret
 .idea
 backup-offsite.env

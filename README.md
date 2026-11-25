@@ -112,8 +112,35 @@ This will:
 
 Access the platform at **http://localhost:8087** (wait ~60 seconds for services to initialize). To stop all services, run `docker compose down` from the `platform-selfhost` folder.
 
+To try it on PostgreSQL instead of CockroachDB, run `./setup.sh --quick --db postgres`
+(see [Choosing a database](#choosing-a-database)).
+
 > [!NOTE]
 > Quick start is intended for local testing only. For production deployments, follow the full setup instructions below.
+
+## Choosing a database
+
+The platform runs on either of two databases. You choose when you first run `setup.sh`:
+it asks, or you can pass `--db cockroach` or `--db postgres`.
+
+| | CockroachDB (default) | PostgreSQL |
+|---|---|---|
+| Service | `cockroach` (`cockroachdb/cockroach`) | `postgres` (`postgres:18`) |
+| Data volume | `cr_data` (+ `cr_certs`) | `pg_data` |
+| Config | `CR_*` variables | `PG_*` variables, `COMPOSE_FILE=compose.yml:compose.postgres.yml` |
+| Secret file | `.cr.secret` | `.pg.secret` |
+
+Things to know:
+
+- **Existing installs keep CockroachDB.** A config without `DB_TYPE` is treated as CockroachDB,
+  so upgrading changes nothing. `setup.sh` will not switch an existing install to another
+  database, because data is **not** migrated between them.
+- On PostgreSQL, `setup.sh` writes `COMPOSE_FILE=compose.yml:compose.postgres.yml` to your config,
+  so plain `docker compose up -d`, `pull`, `logs` and so on pick up the PostgreSQL override
+  automatically. If you keep your own `compose.override.yml`, add it to that `COMPOSE_FILE` line.
+- The PostgreSQL setup needs Docker Compose v2.24.4 or newer.
+- `backup.sh` / `restore.sh` handle both databases. A backup restores only into a deployment
+  running the same database.
 
 ## Installing `nginx` and `docker`
 
@@ -173,7 +200,7 @@ Now, launch your web browser and enjoy the platform! To stop all services, run `
 > [`guides/reverse-proxy.md`](guides/reverse-proxy.md).
 
 > [!IMPORTANT]
-> Provided configrations include deployments of CockroachDB and Redpanda which might not be production-ready. Please inspect them carefully before using in production. For more information on the recommended deployment configurations, please refer to the [CockroachDB](https://www.cockroachlabs.com/docs/stable/recommended-production-settings) and [Redpanda](https://docs.redpanda.com/24.3/deploy/) documentation.
+> Provided configrations include deployments of CockroachDB (or PostgreSQL) and Redpanda which might not be production-ready. Please inspect them carefully before using in production. For more information on the recommended deployment configurations, please refer to the [CockroachDB](https://www.cockroachlabs.com/docs/stable/recommended-production-settings), [PostgreSQL](https://www.postgresql.org/docs/current/runtime-config.html) and [Redpanda](https://docs.redpanda.com/24.3/deploy/) documentation.
 
 ## Health check
 
@@ -215,8 +242,9 @@ When running `./setup.sh`, you'll be prompted to specify custom paths for:
 
 - **Elasticsearch volume**: Search index data storage  
 - **Files volume**: User-uploaded files and attachments
-- **CockroachDB data volume**: Data storage for workspaces and accounts
-- **CockroachDB certs volume**: Certificates for CockroachDB
+- **CockroachDB data volume**: Data storage for workspaces and accounts (CockroachDB installs)
+- **CockroachDB certs volume**: Certificates for CockroachDB (CockroachDB installs)
+- **PostgreSQL data volume**: Data storage for workspaces and accounts (PostgreSQL installs)
 - **Redpanda data volume**: Data storage for Kafka
 
 You can either:
@@ -247,8 +275,14 @@ VOLUME_ELASTIC_PATH=/path/to/elasticsearch
 VOLUME_FILES_PATH=/path/to/files
 VOLUME_CR_DATA_PATH=/path/to/cockroachdb/data
 VOLUME_CR_CERTS_PATH=/path/to/cockroachdb/certs
+# or, on a PostgreSQL install:
+VOLUME_PG_DATA_PATH=/path/to/postgres
 VOLUME_REDPANDA_PATH=/path/to/redpanda/data
 ```
+
+> [!NOTE]
+> `VOLUME_PG_DATA_PATH` is mounted at `/var/lib/postgresql` (the `postgres:18` image keeps
+> its data in `18/docker` underneath). The directory must be writable by uid `999`.
 
 To revert to default volumes, simply leave the paths empty:
 

@@ -15,7 +15,7 @@ spec:
         app: rekoni
     spec:
       containers:
-        - image: platformcollective/rekoni-service:s0.7.426
+        - image: platformcollective/rekoni-service:s0.7.432
           name: rekoni
           env:
             - name: SECRET

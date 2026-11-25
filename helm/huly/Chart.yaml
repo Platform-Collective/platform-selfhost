@@ -3,7 +3,7 @@ name: huly
 description: Platform Collective platform — self-hosted deployment
 type: application
 version: 0.1.0
-appVersion: "s0.7.426"
+appVersion: "s0.7.432"
 home: https://github.com/Platform-Collective/platform
 sources:
   - https://github.com/Platform-Collective/platform-selfhost

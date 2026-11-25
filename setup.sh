@@ -297,6 +297,9 @@ export CR_USERNAME=${CR_USERNAME:-selfhost}
 export PG_DATABASE=${PG_DATABASE:-huly}
 export PG_USERNAME=${PG_USERNAME:-selfhost}
 export REDPANDA_ADMIN_USER=${REDPANDA_ADMIN_USER:-superadmin}
+# The Docker project name: containers and named volumes are prefixed with it, so an
+# existing install must keep its value (installs migrated from Huly may use another one).
+export DOCKER_NAME=${DOCKER_NAME:-huly_v7}
 export VOLUME_ELASTIC_PATH=$_VOLUME_ELASTIC_PATH
 export VOLUME_FILES_PATH=$_VOLUME_FILES_PATH
 export VOLUME_CR_DATA_PATH=$_VOLUME_CR_DATA_PATH
@@ -310,6 +313,16 @@ export REDPANDA_SECRET=$(cat .rp.secret)
 
 envsubst < .template.huly.conf > $CONFIG_FILE
 envsubst < ".template.db-${DB_TYPE}.conf" >> $CONFIG_FILE
+
+# custom.conf holds your own variables (for services you added in compose.override.yml,
+# for example). The config above is regenerated on every run, so they live there instead.
+if [ -f custom.conf ]; then
+    {
+        echo ""
+        echo "# --- from custom.conf (edit that file, not this section) ---"
+        grep -vE '^[[:space:]]*(#|$)' custom.conf
+    } >> $CONFIG_FILE
+fi
 
 source "$CONFIG_FILE"
 

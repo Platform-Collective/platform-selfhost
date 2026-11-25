@@ -64,6 +64,12 @@ To update an existing self-hosted deployment to a new platform version:
    docker compose up -d
    ```
 
+## Migrating from upstream Huly
+
+Running upstream Huly (`hcengineering/huly-selfhost`, v0.7.x) with Docker Compose? `./migrate-from-huly.sh /path/to/huly-selfhost`
+moves it here in place, with your data, added services and config changes. See
+[guides/migrate-from-huly.md](guides/migrate-from-huly.md).
+
 ## Backups
 
 Use the `backup.sh` and `restore.sh` helpers to back up and restore a Docker Compose

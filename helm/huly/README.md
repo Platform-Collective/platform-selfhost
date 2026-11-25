@@ -314,7 +314,7 @@ All app services share these overridable keys: `<svc>.replicas`, `<svc>.resource
 
 | Key | Description | Default |
 |-----|-------------|---------|
-| `hulyVersion` | Image tag for all platform services | `s0.7.426` |
+| `hulyVersion` | Image tag for all platform services | `s0.7.432` |
 | `kvs.enabled` | Deploy KVS (key-value store) service | `true` |
 
 ### GitHub Integration

@@ -32,7 +32,7 @@ spec:
                 secretKeyRef:
                   name: huly-secret
                   key: SERVER_SECRET
-          image: platformcollective/collaborator:s0.7.426
+          image: platformcollective/collaborator:s0.7.432
           name: collaborator
           ports:
             - containerPort: 3078

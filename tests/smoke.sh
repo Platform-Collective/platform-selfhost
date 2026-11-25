@@ -91,7 +91,8 @@ ok "all services running"
 # ---------------------------------------------------------------------------
 step "Front and public config"
 retry 120 curl -fsS --max-time 10 -o /dev/null "$HULY_URL/" || fail "GET $HULY_URL/ did not return 2xx"
-curl -fsS "$HULY_URL/" | grep -qi '<html' || fail "front did not return HTML"
+# the minified index.html may omit the optional <html> tag, so accept a doctype too
+curl -fsS "$HULY_URL/" | grep -qiE '<!doctype html|<html' || fail "front did not return HTML"
 ok "GET / returns HTML"
 
 CONFIG=$(curl -fsS "$HULY_URL/config.json") || fail "GET /config.json failed"

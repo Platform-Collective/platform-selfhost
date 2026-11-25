@@ -109,7 +109,8 @@ test('log in, open workspace, create an issue', async ({ page }) => {
   } else {
     title = `Smoke issue ${Date.now()}`
     await openNewIssueForm(page)
-    await newIssueForm(page).locator('input[type="text"]').first().fill(title)
+    // the title is a <textarea> since s0.7.432 (multi-line titles), an <input> before
+    await newIssueForm(page).locator('#issue-name').locator('textarea, input').first().fill(title)
     await page.locator('button > span', { hasText: 'Create issue' }).click()
     await expect(page.locator('a', { hasText: title })).toBeVisible()
     writeFileSync(uiStateFile, `SMOKE_ISSUE_TITLE=${title}\n`)

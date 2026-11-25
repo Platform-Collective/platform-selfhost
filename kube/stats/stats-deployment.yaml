@@ -15,7 +15,7 @@ spec:
         app: stats
     spec:
       containers:
-        - image: platformcollective/stats:s0.7.426
+        - image: platformcollective/stats:s0.7.432
           name: stats
           env:
             - name: PORT

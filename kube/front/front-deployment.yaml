@@ -71,7 +71,7 @@ spec:
               value: http://stats
             - name: DESKTOP_UPDATES_CHANNEL
               value: selfhost
-          image: platformcollective/front:s0.7.426
+          image: platformcollective/front:s0.7.432
           name: front
           ports:
             - containerPort: 8080

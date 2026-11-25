@@ -10,7 +10,7 @@ fullnameOverride: ""
 # ──────────────────────────────────────────────────────────────
 # Global image tag for all platform services
 # ──────────────────────────────────────────────────────────────
-hulyVersion: s0.7.426
+hulyVersion: s0.7.432
 
 # Docker registry prefix for platform service images.
 # Default "platformcollective" pulls from Docker Hub (platformcollective/front, etc.).

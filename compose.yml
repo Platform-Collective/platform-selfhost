@@ -11,7 +11,7 @@ services:
       - huly_net
 
   cockroach:
-    image: cockroachdb/cockroach:latest-v24.2
+    image: cockroachdb/cockroach:latest-v24.3
     command: start-single-node --accept-sql-without-tls
     environment:
       - COCKROACH_DATABASE=${CR_DATABASE:-}

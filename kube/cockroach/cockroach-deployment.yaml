@@ -21,7 +21,7 @@
           #     mountPath: /cockroach/certs
           containers:
           - name: cockroachdb
-            image: cockroachdb/cockroach:latest-v24.2
+            image: cockroachdb/cockroach:latest-v24.3
             args:
               - start-single-node
               - --accept-sql-without-tls

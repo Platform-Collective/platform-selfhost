@@ -126,7 +126,7 @@ global:
 # ──────────────────────────────────────────────────────────────
 cockroach:
   enabled: true
-  image: cockroachdb/cockroach:latest-v24.2
+  image: cockroachdb/cockroach:latest-v24.3
   database: defaultdb
   username: selfhost
   storage: 10Gi

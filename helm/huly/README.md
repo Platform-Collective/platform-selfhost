@@ -282,7 +282,7 @@ Each infra service can be disabled to use an external instance. When disabled, p
 | Key | Description | Default |
 |-----|-------------|---------|
 | `cockroach.enabled` | Deploy built-in CockroachDB | `true` |
-| `cockroach.image` | CockroachDB image | `cockroachdb/cockroach:latest-v24.2` |
+| `cockroach.image` | CockroachDB image | `cockroachdb/cockroach:latest-v24.3` |
 | `cockroach.storage` | Data PVC size | `10Gi` |
 | `cockroach.storageClassName` | PVC storage class (empty = cluster default) | `""` |
 | `cockroach.database` | Database name | `defaultdb` |

@@ -9,7 +9,8 @@ name: compose-smoke
 #
 # Triggers:
 #   pull_request / push to main       - version from .template.huly.conf; upgrade runs
-#                                       when the PR changes HULY_VERSION
+#                                       when the PR changes HULY_VERSION or the image of an
+#                                       infrastructure service in compose.yml
 #   workflow_dispatch                 - test any version, optionally upgrading from another
 #   repository_dispatch platform-release (client_payload.version) - sent by the platform
 #                                       repo after it pushes release images
@@ -155,7 +156,18 @@ jobs:
             # new platform release: upgrade from what this repo pins now
             from=$(sed -n 's/^HULY_VERSION=//p' .template.huly.conf)
           fi
-          [ "$from" = "$to" ] && from=
+          if [ "$from" = "$to" ]; then
+            from=
+            # same platform version, but a PR that changes infrastructure images (database,
+            # queue, ...) still has to keep existing data: upgrade from the base branch's compose
+            # (diff to a file: `git diff | grep -q` can fail on SIGPIPE under pipefail)
+            if [ "$EVENT" = pull_request ] && \
+               git diff "$BASE_SHA" HEAD -- compose.yml compose.postgres.yml > /tmp/infra.diff && \
+               grep -qE '^[-+][[:space:]]+image:' /tmp/infra.diff; then
+              from=$to
+              echo "Infrastructure images changed: upgrade test with the same platform version"
+            fi
+          fi
           { echo "from=$from"; echo "from_ref=$from_ref"; echo "to=$to"; } >> "$GITHUB_OUTPUT"
           echo "Upgrade: ${from:-<skip>} -> $to (old config from $from_ref)"
 
@@ -207,6 +219,26 @@ jobs:
           cd tests/ui
           npm ci
           SMOKE_MODE=verify npx playwright test
+
+      - name: CockroachDB upgrade finalized
+        if: steps.v.outputs.from != ''
+        working-directory: new
+        run: |
+          # after a major CockroachDB image change the cluster version must follow the binary;
+          # otherwise the data stays on the old version and a later upgrade can fail
+          binary=$(docker compose exec -T cockroach cockroach version --build-tag | sed -E 's/^v([0-9]+\.[0-9]+).*/\1/')
+          cluster=
+          for _ in $(seq 60); do
+            cluster=$(docker compose exec -T cockroach cockroach sql --certs-dir=/cockroach/certs \
+              --format=csv -e 'SHOW CLUSTER SETTING version' | tail -1)
+            if [[ "$cluster" == "$binary" ]]; then
+              echo "CockroachDB cluster version $cluster matches binary $binary"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error title=CockroachDB::cluster version is '$cluster', binary is $binary: the upgrade did not finalize"
+          exit 1
 
       - name: Everything still works for new users
         if: steps.v.outputs.from != ''

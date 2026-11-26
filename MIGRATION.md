@@ -23,6 +23,40 @@ fully supported.
 CockroachDB, and re-running `setup.sh` keeps it that way. `setup.sh` refuses to switch an
 existing install to another database, because data is not migrated between them.
 
+### CockroachDB 24.2 → 24.3
+
+CockroachDB moves from `latest-v24.2` to `latest-v24.3` (Docker Compose, `kube/` and the Helm chart),
+the same line the platform repository uses for development. v24.2 was an Innovation release and
+is out of support; v24.3 is a Regular release with long-term support.
+
+**PostgreSQL deployments: no changes required.**
+
+**CockroachDB deployments:** a direct upgrade from 24.2 to 24.3 is supported. CockroachDB converts
+the data when it starts on the new version and finalizes the upgrade automatically. After
+finalization it cannot go back to 24.2 except by restoring a backup, so take one first:
+
+```bash
+./backup.sh
+git pull
+docker compose pull cockroach
+docker compose up -d
+```
+
+Check that the upgrade has finalized (may take a minute after startup):
+
+```bash
+docker compose exec cockroach cockroach sql --certs-dir=/cockroach/certs -e 'SHOW CLUSTER SETTING version;'
+```
+
+It should print `24.3`.
+
+**Rolling back** requires the backup taken before the upgrade: set the `cockroach` image in
+`compose.yml` back to `cockroachdb/cockroach:latest-v24.2`, then run `./restore.sh <backup dir>`.
+
+**Kubernetes / Helm:** take a backup first (the `backup-cockroachdb` CronJob, if enabled), then
+apply the updated manifests or upgrade the chart. If you override `cockroach.image` in your values,
+update it there.
+
 ### Object storage: MinIO → Silo
 
 The upstream MinIO community edition is no longer maintained, so the `minio` service now runs [`pgsty/silo`](https://github.com/pgsty/silo) — a community-maintained MinIO fork that keeps the same S3 API, on-disk format and `MINIO_*` variables.

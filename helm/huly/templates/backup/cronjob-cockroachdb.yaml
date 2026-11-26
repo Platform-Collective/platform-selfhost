@@ -27,7 +27,7 @@ spec:
               emptyDir: {}
           initContainers:
             - name: crdb-dump
-              image: cockroachdb/cockroach:latest-v24.2
+              image: cockroachdb/cockroach:latest-v24.3
               volumeMounts:
                 - name: backup
                   mountPath: /backup

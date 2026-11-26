@@ -23,6 +23,17 @@ fully supported.
 CockroachDB, and re-running `setup.sh` keeps it that way. `setup.sh` refuses to switch an
 existing install to another database, because data is not migrated between them.
 
+### Traefik sample: v2.10 → v3.7 (security)
+
+The sample Traefik setup in `traefik/` now uses `traefik:v3.7`. Traefik v2.10 has had no
+security support since February 2024, and the whole v2 line is end of life. It also cannot
+talk to Docker Engine 29+, which raised the minimum Docker API version (Traefik fails with
+`client version 1.24 is too old`); this was fixed in Traefik v3.6.1.
+
+**No configuration changes required**: the labels and flags in the template work unchanged
+on v3. If you deployed from `traefik/`, update the image in your generated
+`traefik/docker-compose.yaml` — see [Upgrading Traefik](traefik/README.md#upgrading-traefik).
+
 ### Object storage: MinIO → Silo
 
 The upstream MinIO community edition is no longer maintained, so the `minio` service now runs [`pgsty/silo`](https://github.com/pgsty/silo) — a community-maintained MinIO fork that keeps the same S3 API, on-disk format and `MINIO_*` variables.

@@ -156,6 +156,23 @@ Now, install `nginx`:
 sudo apt install nginx
 ```
 
+### Keeping the host nginx up to date
+
+The host nginx is the internet-facing one, so keep it patched. Distribution packages often
+fix vulnerabilities without changing the version number, so check the changelog for the CVE
+rather than the version. For example, for NGINX2Root (fixed upstream in 1.30.7 / 1.31.9):
+
+```bash
+nginx -v
+apt changelog nginx 2>/dev/null | grep -cE "CVE-2026-(123007|123633)"   # 0 = not fixed
+```
+
+If your distribution has not shipped a fix yet, either install nginx from the
+[official nginx.org repository](https://nginx.org/en/linux_packages.html), or, as a
+stopgap, disable HTTP/2 on your TLS server block (`http2 off;` on nginx 1.25.1+, otherwise
+remove `http2` from the `listen` directive). After upgrading the package, run
+`sudo systemctl restart nginx` — `nginx -s reload` keeps the old binary running.
+
 Install docker using the [recommended method](https://docs.docker.com/engine/install/ubuntu/) from docker website.
 Afterwards perform [post-installation steps](https://docs.docker.com/engine/install/linux-postinstall/). Pay attention to 3rd step with `newgrp docker` command, it needed for correct execution in setup script.
 

@@ -1,0 +1,16 @@
+version: 2
+updates:
+  # Image tags in compose.yml (nginx and the other infrastructure images).
+  # Platform images use ${HULY_VERSION} and are bumped by the release flow, not here.
+  - package-ecosystem: "docker-compose"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      compose-images:
+        patterns: ["*"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

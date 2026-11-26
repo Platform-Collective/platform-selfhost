@@ -23,6 +23,27 @@ fully supported.
 CockroachDB, and re-running `setup.sh` keeps it that way. `setup.sh` refuses to switch an
 existing install to another database, because data is not migrated between them.
 
+### Bundled nginx: 1.21.3 → 1.30.7 (security)
+
+The bundled `nginx` container is updated to 1.30.7, which fixes the NGINX2Root
+vulnerabilities (CVE-2026-123007, CVE-2026-123633, CVE-2026-123634, CVE-2026-121810,
+CVE-2026-113425) and the earlier rewrite-module flaw CVE-2026-42945. The bundled config
+uses both `resolver` and `rewrite`, so it is in scope even though it does not enable HTTP/2.
+
+**No configuration changes required**: `.huly.nginx` works unchanged on 1.30.7. Update
+only the nginx container — no data is touched:
+
+```bash
+git pull
+docker compose pull nginx
+docker compose up -d nginx
+```
+
+`nginx -s reload` is not enough for a version upgrade: the container must be recreated.
+
+If you run a **host** nginx in front of the stack (server installs), update it as well —
+see [Keeping the host nginx up to date](README.md#keeping-the-host-nginx-up-to-date).
+
 ### Object storage: MinIO → Silo
 
 The upstream MinIO community edition is no longer maintained, so the `minio` service now runs [`pgsty/silo`](https://github.com/pgsty/silo) — a community-maintained MinIO fork that keeps the same S3 API, on-disk format and `MINIO_*` variables.

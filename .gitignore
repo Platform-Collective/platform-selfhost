@@ -1,5 +1,7 @@
 letsencrypt/
-traefik/docker-compose.yaml
+traefik/config/
+traefik/certs/
+traefik/.dashboard.password
 nginx.conf
 nginx.conf.bak
 huly.conf

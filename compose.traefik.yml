@@ -1,0 +1,34 @@
+# Traefik override for compose.yml: automatic HTTPS in front of the platform,
+# instead of a host nginx.
+#
+# Do not enable it by hand: run traefik/setup.sh. It generates the Traefik config in
+# traefik/config/ and adds this file to COMPOSE_FILE in huly_v7.conf, so plain
+# `docker compose ...` commands pick it up (setup.sh keeps that line on re-runs).
+#
+# Traefik terminates TLS and forwards everything to the bundled nginx container, which
+# keeps doing the platform routing (/_accounts, /_transactor, ...). Traefik uses the file
+# provider only: it does not need access to the Docker socket.
+#
+# Requires Docker Compose v2.24.4 or newer (for the !reset tag).
+
+services:
+  traefik:
+    image: "traefik:v3.7"
+    ports:
+      - "80:80"
+      - "443:443"
+      # Dashboard (only listens when enabled in traefik/setup.sh; password-protected)
+      - "8443:8443"
+    volumes:
+      - ./traefik/config:/etc/traefik:ro
+      - ./traefik/certs:/certs:ro
+      - ./traefik/letsencrypt:/letsencrypt
+    depends_on:
+      - nginx
+    restart: unless-stopped
+    networks:
+      - huly_net
+
+  nginx:
+    # Only reachable through Traefik: do not publish HTTP_PORT on the host.
+    ports: !reset []

@@ -10,8 +10,8 @@
 1. Clone the repository
 
    ```bash
-   git clone https://github.com/hcengineering/huly-selfhost.git
-   cd huly-selfhost/traefik
+   git clone https://github.com/Platform-Collective/platform-selfhost.git
+   cd platform-selfhost/traefik
    ```
 
 2. Run setup.sh
@@ -39,3 +39,20 @@
    ```
 
 6. Access Huly at `https://example.com`
+
+### Upgrading Traefik
+
+`docker-compose.yaml` is generated once from `template-compose.yaml`, so a new Traefik version
+in the template does not reach an existing install by itself. Re-running `setup.sh` would
+overwrite your customizations, so update the image line instead:
+
+```bash
+sed -i 's|image: "traefik:v2.10"|image: "traefik:v3.7"|' docker-compose.yaml
+docker compose pull traefik
+docker compose up -d traefik
+```
+
+The labels and command-line flags used here are unchanged in Traefik v3, and the existing
+`letsencrypt/acme.json` is reused, so certificates are not re-issued. The `v3.7` tag follows
+patch releases: run `docker compose pull traefik && docker compose up -d traefik` regularly to
+pick up security fixes.

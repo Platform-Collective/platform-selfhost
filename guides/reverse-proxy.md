@@ -33,6 +33,7 @@ file). Caddy handles certificate issuance/renewal and the WebSocket upgrade for 
 
 ## Traefik
 
-A sample Traefik setup lives under [`traefik/`](../traefik). As with the others, set
-`SECURE=true` and `HOST_ADDRESS` so the platform emits `https`/`wss`, and make sure the router
-forwards WebSockets to the `front` service.
+Traefik runs as a container next to the platform and replaces the host nginx: it gets
+certificates from Let's Encrypt (or uses your own), redirects HTTP to HTTPS, and forwards
+everything to the bundled nginx container. Run `./setup.sh` with your domain and SSL enabled,
+then `traefik/setup.sh`. See [`traefik/README.md`](../traefik/README.md).

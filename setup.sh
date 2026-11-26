@@ -311,6 +311,19 @@ export REDPANDA_SECRET=$(cat .rp.secret)
 envsubst < .template.huly.conf > $CONFIG_FILE
 envsubst < ".template.db-${DB_TYPE}.conf" >> $CONFIG_FILE
 
+# Traefik (traefik/setup.sh) stays enabled across re-runs: re-add its compose override.
+USE_TRAEFIK=false
+if [ -f traefik/config/traefik.yml ]; then
+    USE_TRAEFIK=true
+    current_compose=$(sed -n 's/^COMPOSE_FILE=//p' "$CONFIG_FILE" | tail -1)
+    if [ -n "$current_compose" ]; then
+        sed -i.bak "s|^COMPOSE_FILE=.*|COMPOSE_FILE=${current_compose}:compose.traefik.yml|" "$CONFIG_FILE"
+        rm -f "$CONFIG_FILE.bak"
+    else
+        printf '\n# Traefik in front of the platform (traefik/setup.sh). setup.sh keeps this line.\nCOMPOSE_FILE=compose.yml:compose.traefik.yml\n' >> "$CONFIG_FILE"
+    fi
+fi
+
 source "$CONFIG_FILE"
 
 echo -e "\n\033[1;34mConfiguration Summary:\033[0m"
@@ -366,8 +379,13 @@ else
     esac
 fi
 
-echo -e "\033[1;32mSetup is complete!\n Generating nginx.conf...\033[0m"
-./nginx.sh
+if [ "$USE_TRAEFIK" == true ]; then
+    echo -e "\033[1;32mSetup is complete!\033[0m Traefik serves the platform at https://${_HOST_ADDRESS} (no host nginx needed)."
+    echo "If you changed the host address, re-run traefik/setup.sh to update the Traefik config."
+else
+    echo -e "\033[1;32mSetup is complete!\n Generating nginx.conf...\033[0m"
+    ./nginx.sh
+fi
 
 if [ "$QUICK" == true ]; then
     echo ""

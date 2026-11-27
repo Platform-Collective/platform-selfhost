@@ -2,13 +2,17 @@ version: 2
 updates:
   # Image tags in compose.yml (nginx and the other infrastructure images).
   # Platform images use ${HULY_VERSION} and are bumped by the release flow, not here.
+  #
+  # Only the stateless proxy is grouped. Stateful services (databases, redpanda, silo,
+  # elasticsearch) stay ungrouped, so each upgrade arrives as its own PR and is reviewed
+  # separately, with its own data-migration notes.
   - package-ecosystem: "docker-compose"
     directory: "/"
     schedule:
       interval: "weekly"
     groups:
-      compose-images:
-        patterns: ["*"]
+      proxy:
+        patterns: ["nginx"]
 
   - package-ecosystem: "github-actions"
     directory: "/"

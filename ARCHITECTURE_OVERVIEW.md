@@ -268,7 +268,7 @@ sequenceDiagram
 | Service | Container | Port | Purpose | Dependencies |
 |---------|-----------|------|---------|--------------|
 | **Reverse Proxy** | | | | |
-| nginx | nginx:1.30.7 | 80/443 | Reverse proxy, SSL termination | all services |
+| nginx | nginx:1.30.8 | 80/443 | Reverse proxy, SSL termination | all services |
 | **Frontend** | | | | |
 | front | platformcollective/front | 8080 | Web application server | account, minio |
 | **Core** | | | | |

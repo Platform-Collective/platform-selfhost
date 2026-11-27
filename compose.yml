@@ -1,7 +1,7 @@
 name: ${DOCKER_NAME}
 services:
   nginx:
-    image: "nginx:1.30.7"
+    image: "nginx:1.30.8"
     ports:
       - "${HTTP_BIND}:${HTTP_PORT}:80"
     volumes:

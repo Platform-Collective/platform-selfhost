@@ -23,14 +23,15 @@ fully supported.
 CockroachDB, and re-running `setup.sh` keeps it that way. `setup.sh` refuses to switch an
 existing install to another database, because data is not migrated between them.
 
-### Bundled nginx: 1.21.3 → 1.30.7 (security)
+### Bundled nginx: 1.21.3 → 1.30.8 (security)
 
-The bundled `nginx` container is updated to 1.30.7, which fixes the NGINX2Root
+The bundled `nginx` container is updated to 1.30.8. Release 1.30.7 fixed the NGINX2Root
 vulnerabilities (CVE-2026-123007, CVE-2026-123633, CVE-2026-123634, CVE-2026-121810,
-CVE-2026-113425) and the earlier rewrite-module flaw CVE-2026-42945. The bundled config
-uses both `resolver` and `rewrite`, so it is in scope even though it does not enable HTTP/2.
+CVE-2026-113425) and the earlier rewrite-module flaw CVE-2026-42945; 1.30.8 adds the fix
+for CVE-2026-132779 (excessive CPU usage with `ssl_early_data`). The bundled config uses
+both `resolver` and `rewrite`, so it is in scope even though it does not enable HTTP/2.
 
-**No configuration changes required**: `.huly.nginx` works unchanged on 1.30.7. Update
+**No configuration changes required**: `.huly.nginx` works unchanged on 1.30.8. Update
 only the nginx container — no data is touched:
 
 ```bash

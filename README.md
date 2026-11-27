@@ -158,20 +158,34 @@ sudo apt install nginx
 
 ### Keeping the host nginx up to date
 
-The host nginx is the internet-facing one, so keep it patched. Distribution packages often
-fix vulnerabilities without changing the version number, so check the changelog for the CVE
-rather than the version. For example, for NGINX2Root (fixed upstream in 1.30.7 / 1.31.9):
+The host nginx is the internet-facing one, so keep it patched. Distributions backport
+security fixes without changing the upstream version, so `nginx -v` does not tell you
+whether you are affected. Upstream, NGINX2Root is fixed in 1.30.7 / 1.31.9 and
+CVE-2026-132779 in 1.30.8; for your distribution package, check its own advisory instead:
 
-```bash
-nginx -v
-apt changelog nginx 2>/dev/null | grep -cE "CVE-2026-(123007|123633)"   # 0 = not fixed
-```
+1. Look up the CVE in your distribution's security tracker — e.g. the
+   [Debian Security Tracker](https://security-tracker.debian.org/tracker/),
+   [Ubuntu CVE reports](https://ubuntu.com/security/cves), or your RHEL-family vendor's
+   errata — and note the **fixed package version** for your release.
+2. Compare it with the installed package version:
+
+   ```bash
+   # Debian / Ubuntu
+   installed=$(dpkg-query -W -f='${Version}' nginx)
+   fixed=<fixed version from the advisory>
+   dpkg --compare-versions "$installed" ge "$fixed" && echo "patched" || echo "NOT patched: $installed"
+
+   # RHEL / Alma / Rocky / Fedora
+   rpm -q nginx
+   dnf updateinfo list --cve CVE-2026-132779   # lists a pending update if you are not patched
+   ```
 
 If your distribution has not shipped a fix yet, either install nginx from the
 [official nginx.org repository](https://nginx.org/en/linux_packages.html), or, as a
 stopgap, disable HTTP/2 on your TLS server block (`http2 off;` on nginx 1.25.1+, otherwise
-remove `http2` from the `listen` directive). After upgrading the package, run
-`sudo systemctl restart nginx` — `nginx -s reload` keeps the old binary running.
+remove `http2` from the `listen` directive) and turn off `ssl_early_data` if you enabled it.
+After upgrading the package, run `sudo systemctl restart nginx` — `nginx -s reload` keeps
+the old binary running.
 
 Install docker using the [recommended method](https://docs.docker.com/engine/install/ubuntu/) from docker website.
 Afterwards perform [post-installation steps](https://docs.docker.com/engine/install/linux-postinstall/). Pay attention to 3rd step with `newgrp docker` command, it needed for correct execution in setup script.
